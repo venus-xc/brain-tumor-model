@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brain Tumor AI Diagnostic & Monitoring Workstation</title>
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            },
+            medical: {
+              dark: '#090d16',
+              card: '#0f172a',
+              cardBorder: '#1e293b',
+              accent: '#38bdf8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Clinical Top Navbar -->
+  <header class="bg-[#0f172a]/95 backdrop-blur border-b border-slate-800 sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center space-x-3.5">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/20">
+        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-base font-bold tracking-tight text-white">NEURO-AI PACS WORKSTATION</h1>
+          <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Clinical AI v1.0</span>
+        </div>
+        <p class="text-xs text-slate-400 truncate max-w-xl">
+          Brain Tumor Detection & Longitudinal Monitoring System &bull; <span class="text-slate-300 font-medium">Mrs. Swarnalata Pati</span> (Guide) | <span class="text-slate-300 font-medium">Chinmayee Patra &amp; Shruti Sameekshya Dehury</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center space-x-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+      <button onclick="switchTab('diagnostic')" id="tab-btn-diagnostic" class="tab-btn active px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-2 transition-all">
+        <i data-lucide="scan" class="w-4 h-4"></i>
+        <span>Diagnostic Workstation</span>
+      </button>
+      <button onclick="switchTab('longitudinal')" id="tab-btn-longitudinal" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-2 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="history" class="w-4 h-4"></i>
+        <span>Longitudinal Monitoring</span>
+      </button>
+      <button onclick="switchTab('report')" id="tab-btn-report" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-2 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="file-text" class="w-4 h-4"></i>
+        <span>Clinical PDF Report</span>
+      </button>
+      <button onclick="switchTab('methodology')" id="tab-btn-methodology" class="tab-btn px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center space-x-2 transition-all text-slate-400 hover:text-white">
+        <i data-lucide="cpu" class="w-4 h-4"></i>
+        <span>Methodology</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+
+    <!-- ==================== TAB 1: DIAGNOSTIC WORKSTATION ==================== -->
+    <div id="tab-diagnostic" class="tab-content space-y-6">
+
+      <!-- Preset Bar & Upload Action -->
+      <div class="bg-[#0f172a] rounded-2xl p-4 border border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold mr-1">Benchmark Presets:</span>
+          <button onclick="loadSample('glioma')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 flex items-center space-x-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            <span>Glioma Case</span>
+          </button>
+          <button onclick="loadSample('meningioma')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 flex items-center space-x-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>Meningioma Case</span>
+          </button>
+          <button onclick="loadSample('pituitary')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 flex items-center space-x-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span>Pituitary Adenoma</span>
+          </button>
+          <button onclick="loadSample('normal')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 flex items-center space-x-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Healthy / No Tumor</span>
+          </button>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <label class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold cursor-pointer flex items-center space-x-2 transition shadow-lg shadow-brand-500/20">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>Upload MRI Scan</span>
+            <input type="file" id="fileInput" class="hidden" accept="image/*,.dcm" onchange="handleFileUpload(event)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Main Dual Workstation Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Visual Viewport & Layer Sliders (7 cols) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="bg-[#0f172a] rounded-2xl border border-slate-800 p-5 shadow-xl space-y-4">
+            
+            <!-- Viewport Header & Layer Mode Selector -->
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="eye" class="w-4 h-4 text-brand-400"></i>
+                <h2 class="text-sm font-semibold text-white tracking-wide">Multi-Modal Radiologic Viewer</h2>
+              </div>
+              <div class="flex items-center bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+                <button onclick="setViewMode('original')" id="btn-mode-orig" class="px-2.5 py-1 rounded font-medium text-slate-300 transition">MRI</button>
+                <button onclick="setViewMode('segmentation')" id="btn-mode-seg" class="px-2.5 py-1 rounded font-medium bg-brand-600 text-white transition">U-Net Mask</button>
+                <button onclick="setViewMode('gradcam')" id="btn-mode-cam" class="px-2.5 py-1 rounded font-medium text-slate-300 transition">Grad-CAM</button>
+                <button onclick="setViewMode('mask_only')" id="btn-mode-mask" class="px-2.5 py-1 rounded font-medium text-slate-300 transition">Mask Binary</button>
+              </div>
+            </div>
+
+            <!-- Image Viewport Canvas / Frame -->
+            <div class="relative aspect-square max-h-[460px] mx-auto bg-black rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center group">
+              <img id="viewerImage" src="/static/samples/sample_glioma.png" alt="Brain MRI Viewport" class="w-full h-full object-contain select-none">
+              
+              <!-- Scanning Crosshair Overlay HUD -->
+              <div class="absolute inset-0 pointer-events-none border border-brand-500/20 m-4 rounded">
+                <div class="absolute top-2 left-2 text-[10px] font-mono text-brand-400/80 bg-slate-950/80 px-2 py-0.5 rounded border border-brand-500/20">
+                  AXIAL T1-CE &bull; 224x224 &bull; 0.94mm/px
+                </div>
+                <div id="hudCoordinates" class="absolute bottom-2 right-2 text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
+                  XAI Saliency Active
+                </div>
+              </div>
+
+              <!-- Loading Spinner -->
+              <div id="loadingOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-3 hidden">
+                <div class="w-10 h-10 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
+                <p class="text-xs text-brand-400 font-medium">Running Deep Neural Inference...</p>
+              </div>
+            </div>
+
+            <!-- Interactive Sliders Panel -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 space-y-1.5">
+                <div class="flex justify-between text-xs">
+                  <span class="text-slate-400 font-medium">Grad-CAM Heatmap Alpha</span>
+                  <span id="valAlpha" class="text-brand-400 font-mono">0.45</span>
+                </div>
+                <input type="range" id="sliderAlpha" min="0.1" max="0.9" step="0.05" value="0.45" oninput="updateAlpha(this.value)" class="w-full accent-brand-500 cursor-pointer">
+              </div>
+
+              <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 space-y-1.5">
+                <div class="flex justify-between text-xs">
+                  <span class="text-slate-400 font-medium">U-Net Mask Threshold</span>
+                  <span id="valThresh" class="text-brand-400 font-mono">0.50</span>
+                </div>
+                <input type="range" id="sliderThresh" min="0.2" max="0.8" step="0.05" value="0.50" oninput="updateThreshold(this.value)" class="w-full accent-brand-500 cursor-pointer">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right Column: Diagnostic Findings & Quantitative Metrics (5 cols) -->
+        <div class="lg:col-span-5 space-y-5">
+          
+          <!-- Primary Diagnosis Card -->
+          <div id="diagnosisCard" class="bg-[#0f172a] rounded-2xl border border-slate-800 p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Primary Finding</span>
+              <span id="tumorStatusBadge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-500/10 text-red-400 border border-red-500/20">LESION DETECTED</span>
+            </div>
+
+            <div>
+              <div class="flex items-baseline space-x-2">
+                <h3 id="predictedLabel" class="text-2xl font-extrabold text-white">Glioma</h3>
+                <span id="confidenceScore" class="text-sm font-semibold text-brand-400 font-mono">98.4% Confidence</span>
+              </div>
+              <p id="diagnosisDescription" class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Infiltrative neuroepithelial primary brain tumor displaying heterogeneous core and diffuse edema boundaries.
+              </p>
+            </div>
+
+            <!-- Softmax Class Probability Distribution -->
+            <div class="space-y-2 pt-2 border-t border-slate-800/80">
+              <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Classification Distribution</div>
+              <div id="classProbabilities" class="space-y-1.5 text-xs">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Quantitative Volumetric & Morphometric Card -->
+          <div class="bg-[#0f172a] rounded-2xl border border-slate-800 p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="ruler" class="w-4 h-4 text-emerald-400"></i>
+                <h3 class="text-sm font-semibold text-white">Morphometrics &amp; Volumetric Analysis</h3>
+              </div>
+              <span class="text-[10px] text-slate-400 font-mono">Slice dz = 3.0mm</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <div class="text-[11px] text-slate-400">Estimated Volume</div>
+                <div id="metricVolume" class="text-lg font-bold text-white font-mono mt-0.5">3.72 cm³</div>
+                <div id="metricVolumeMm" class="text-[10px] text-slate-500">3,720 mm³</div>
+              </div>
+
+              <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <div class="text-[11px] text-slate-400">Cross-Sectional Area</div>
+                <div id="metricArea" class="text-lg font-bold text-white font-mono mt-0.5">1.24 cm²</div>
+                <div id="metricAreaMm" class="text-[10px] text-slate-500">124 mm²</div>
+              </div>
+
+              <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <div class="text-[11px] text-slate-400">Major × Minor Axis</div>
+                <div id="metricAxes" class="text-sm font-bold text-white font-mono mt-1">15.8 × 10.2 mm</div>
+                <div class="text-[10px] text-slate-500">Orthogonal RECIST</div>
+              </div>
+
+              <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <div class="text-[11px] text-slate-400">Sphericity Index</div>
+                <div id="metricSphericity" class="text-sm font-bold text-emerald-400 font-mono mt-1">0.824</div>
+                <div class="text-[10px] text-slate-500">1.0 = Regular circular</div>
+              </div>
+            </div>
+
+            <!-- Quick Action: Export Clinical PDF -->
+            <button onclick="triggerPdfExport()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center justify-center space-x-2 border border-slate-700 transition">
+              <i data-lucide="download" class="w-4 h-4 text-brand-400"></i>
+              <span>Generate Clinical PDF Report</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB 2: LONGITUDINAL MONITORING ==================== -->
+    <div id="tab-longitudinal" class="tab-content hidden space-y-6">
+      
+      <div class="bg-[#0f172a] rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+              <i data-lucide="history" class="w-5 h-5 text-indigo-400"></i>
+              <span>Longitudinal Examination &amp; Treatment-Response Assessment</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Automated multi-timepoint comparison (Baseline vs. Follow-up) evaluated under neuro-oncology RANO / RECIST clinical criteria.
+            </p>
+          </div>
+          <button onclick="runLongitudinalAnalysis()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center space-x-2 shadow-lg shadow-indigo-500/20 transition">
+            <i data-lucide="play" class="w-4 h-4"></i>
+            <span>Run Longitudinal Comparison</span>
+          </button>
+        </div>
+
+        <!-- 3-Panel Longitudinal Visual Comparison -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          
+          <!-- Baseline Examination -->
+          <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-300">Timepoint 1: Baseline Scan</span>
+              <span class="text-[10px] font-mono text-slate-500">Day 0</span>
+            </div>
+            <div class="aspect-square bg-black rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+              <img id="longBaseImg" src="/static/samples/longitudinal_baseline.png" alt="Baseline MRI" class="w-full h-full object-contain">
+            </div>
+            <div class="text-xs text-slate-400 space-y-1 pt-1">
+              <div class="flex justify-between"><span>Volume:</span> <b id="longBaseVol" class="text-white font-mono">3.72 cm³</b></div>
+              <div class="flex justify-between"><span>Area:</span> <b id="longBaseArea" class="text-white font-mono">1.24 cm²</b></div>
+            </div>
+          </div>
+
+          <!-- Follow-up Examination -->
+          <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-300">Timepoint 2: Follow-up Scan</span>
+              <span class="text-[10px] font-mono text-indigo-400 font-semibold">Post-Chemoradiotherapy</span>
+            </div>
+            <div class="aspect-square bg-black rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+              <img id="longFollowImg" src="/static/samples/longitudinal_followup.png" alt="Follow-up MRI" class="w-full h-full object-contain">
+            </div>
+            <div class="text-xs text-slate-400 space-y-1 pt-1">
+              <div class="flex justify-between"><span>Volume:</span> <b id="longFollowVol" class="text-white font-mono">1.28 cm³</b></div>
+              <div class="flex justify-between"><span>Area:</span> <b id="longFollowArea" class="text-white font-mono">0.43 cm²</b></div>
+            </div>
+          </div>
+
+          <!-- Spatial Delta Progression Map -->
+          <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-slate-300">Spatial Delta Difference Map</span>
+              <span class="text-[10px] font-mono text-emerald-400 font-semibold">Regression</span>
+            </div>
+            <div class="aspect-square bg-black rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center relative">
+              <img id="longDeltaImg" src="/static/samples/sample_glioma.png" alt="Delta Difference Map" class="w-full h-full object-contain">
+              <div class="absolute bottom-2 inset-x-2 flex justify-center space-x-2 text-[9px] bg-slate-950/90 py-1 px-2 rounded border border-slate-800">
+                <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded bg-green-500"></span><span>Regressed</span></span>
+                <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded bg-yellow-400"></span><span>Persistent</span></span>
+                <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded bg-red-500"></span><span>Growth</span></span>
+              </div>
+            </div>
+            <div class="text-xs text-slate-400 space-y-1 pt-1">
+              <div class="flex justify-between"><span>Δ Volume:</span> <b id="longDeltaVol" class="text-emerald-400 font-mono">-2.44 cm³ (-65.6%)</b></div>
+              <div class="flex justify-between"><span>Monthly Velocity:</span> <b id="longVelocity" class="text-slate-300 font-mono">-0.81 cm³/mo</b></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RANO Response Verdict Card -->
+        <div id="longitudinalVerdictBox" class="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 flex items-start space-x-3">
+          <i data-lucide="check-circle" class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <div class="text-sm font-bold text-blue-300" id="longVerdictTitle">RANO Assessment: Partial Response (PR)</div>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed" id="longVerdictText">
+              Significant tumor regression (65.6% volumetric reduction). Favorable response to current therapeutic regimen without evidence of new distant parenchymal lesions.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB 3: CLINICAL PDF REPORT ==================== -->
+    <div id="tab-report" class="tab-content hidden space-y-6">
+      
+      <div class="bg-[#0f172a] rounded-2xl p-6 border border-slate-800 shadow-xl max-w-2xl mx-auto space-y-5">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <i data-lucide="file-check" class="w-5 h-5 text-brand-400"></i>
+            <span>Generate Board-Certified Clinical Report</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Builds an official multi-page diagnostic PDF including patient demographics, multi-modal imaging triad, quantitative metrics, and automated radiological impression.
+          </p>
+        </div>
+
+        <form id="reportForm" onsubmit="handleReportGenerate(event)" class="space-y-4 text-xs">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-slate-400 font-medium mb-1">Patient Full Name</label>
+              <input type="text" id="repPatientName" value="Mrs. Chinmayee Patra" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+              <label class="block text-slate-400 font-medium mb-1">Patient ID / Case #</label>
+              <input type="text" id="repPatientId" value="MRN-2026-BTR-701" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-slate-400 font-medium mb-1">Age / Sex</label>
+              <input type="text" id="repAgeGender" value="52 / F" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+              <label class="block text-slate-400 font-medium mb-1">Target Diagnostic Scan</label>
+              <select id="repSampleKey" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-brand-500">
+                <option value="glioma" selected>Glioma Case Study</option>
+                <option value="meningioma">Meningioma Case Study</option>
+                <option value="pituitary">Pituitary Adenoma Case Study</option>
+                <option value="normal">Healthy / Normal Brain</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 pt-2">
+            <input type="checkbox" id="repIncludeLong" checked class="rounded border-slate-800 bg-slate-900 text-brand-600 focus:ring-0">
+            <label for="repIncludeLong" class="text-slate-300 font-medium">Include Longitudinal Progression &amp; RANO Criteria Analysis</label>
+          </div>
+
+          <button type="submit" id="btnGenerateReport" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold flex items-center justify-center space-x-2 shadow-lg shadow-brand-500/20 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Generate &amp; Download PDF Radiology Report</span>
+          </button>
+        </form>
+
+        <div id="reportSuccessBox" class="hidden p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <i data-lucide="check" class="w-5 h-5 text-emerald-400"></i>
+            <span class="text-xs text-emerald-300 font-medium" id="reportSuccessMsg">Report generated successfully!</span>
+          </div>
+          <a id="reportDownloadLink" href="#" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center space-x-1.5 transition">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            <span>Open PDF</span>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB 4: METHODOLOGY & ARCHITECTURE ==================== -->
+    <div id="tab-methodology" class="tab-content hidden space-y-6">
+      
+      <div class="bg-[#0f172a] rounded-2xl p-6 border border-slate-800 shadow-xl space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-lg font-bold text-white">System Architecture &amp; Algorithmic Foundations</h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Implementation details corresponding directly to the research requirements articulated in the seminar abstract.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+            <div class="flex items-center space-x-2 text-brand-400 font-semibold text-sm">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+              <span>1. Multi-Class CNN Classifier</span>
+            </div>
+            <p class="text-slate-300 leading-relaxed">
+              Residual deep convolutional network with batch normalization and adaptive global pooling. Discerning between Glioma, Meningioma, Pituitary Adenoma, and Healthy parenchyma with Softmax confidence calibration.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+            <div class="flex items-center space-x-2 text-emerald-400 font-semibold text-sm">
+              <i data-lucide="crop" class="w-4 h-4"></i>
+              <span>2. Biomedical U-Net Segmentation</span>
+            </div>
+            <p class="text-slate-300 leading-relaxed">
+              Encoder-decoder symmetric architecture with skip connections preserving spatial gradient information. Accurately segments diffuse, irregular tumor margins and necrotic cores.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+            <div class="flex items-center space-x-2 text-amber-400 font-semibold text-sm">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>3. Explainable AI (Grad-CAM)</span>
+            </div>
+            <p class="text-slate-300 leading-relaxed">
+              Gradient-weighted Class Activation Mapping hooked to the final convolutional feature maps. Projects neural attribution saliency heatmaps to eliminate black-box uncertainty for clinicians.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+            <div class="flex items-center space-x-2 text-indigo-400 font-semibold text-sm">
+              <i data-lucide="git-commit" class="w-4 h-4"></i>
+              <span>4. Longitudinal RANO Modeling</span>
+            </div>
+            <p class="text-slate-300 leading-relaxed">
+              Tracks successive scans across patient therapy timelines. Computes volumetric delta (&Delta;V), surface area shifts, doubling rates, and categorizes clinical response into Complete Response, Partial Response, Stable Disease, or Progression.
+            </p>
+          </div>
+
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 text-xs text-slate-400 space-y-1">
+          <div class="font-semibold text-slate-300">Project Authors &amp; Academic Supervision:</div>
+          <div>Seminar Title: <i>Brain Tumor Detection and Monitoring Using Artificial Intelligence and Machine Learning</i></div>
+          <div>Supervisor: <b>Mrs. Swarnalata Pati</b></div>
+          <div>Students: <b>Chinmayee Patra</b> (Regd. 23110206), <b>Shruti Sameekshya Dehury</b> (Regd. 23110234)</div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500">
+    NeuroOncology Deep Learning Imaging Workstation &bull; Powered by PyTorch, U-Net, Grad-CAM &amp; FastAPI
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

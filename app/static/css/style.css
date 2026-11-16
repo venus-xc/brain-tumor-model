@@ -1,0 +1,58 @@
+/* Medical AI PACS Workstation Styles */
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Tab Button Active State */
+.tab-btn.active {
+  background-color: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 4px 14px 0 rgba(2, 132, 199, 0.35);
+}
+
+/* Custom Range Input */
+input[type="range"] {
+  -webkit-appearance: none;
+  background: #1e293b;
+  height: 6px;
+  border-radius: 4px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+  transition: transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Smooth Image Transitions */
+#viewerImage {
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* Badge Glows */
+.badge-glow-red {
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+}
+.badge-glow-green {
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+}
