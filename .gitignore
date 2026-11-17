@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 app/static/uploads/*
 !app/static/uploads/.gitkeep
-app/static/reports/radiology_report_*.pdf
+app/static/reports/*.pdf
+!app/static/reports/.gitkeep
 data/
 .DS_Store
