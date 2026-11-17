@@ -304,11 +304,40 @@ async def download_ieee_latex():
 @app.head("/api/ieee/report/download")
 async def download_ieee_report():
     """Serves the complete University Seminar & Major Project Thesis Report."""
-    md_path = Path(__file__).resolve().parent.parent / "paper" / "IEEE_Seminar_Project_Report.md"
+    md_path = Path(__file__).resolve().parent.parent / "paper" / "FINAL_SEMINAR_REPORT_OUTR.md"
+    if not md_path.exists():
+        md_path = Path(__file__).resolve().parent.parent / "paper" / "IEEE_Seminar_Project_Report.md"
     if not md_path.exists():
         raise HTTPException(status_code=404, detail="Project report not found.")
     return FileResponse(
         path=str(md_path),
-        filename="IEEE_Seminar_Project_Report.md",
+        filename="FINAL_SEMINAR_REPORT_OUTR.md",
         media_type="text/markdown"
     )
+
+@app.get("/api/report/final/docx")
+@app.head("/api/report/final/docx")
+async def download_final_report_docx():
+    """Serves the official formatted OUTR Seminar Report Word document (.docx)."""
+    docx_path = Path(__file__).resolve().parent.parent / "paper" / "FINAL_SEMINAR_REPORT_OUTR.docx"
+    if not docx_path.exists():
+        raise HTTPException(status_code=404, detail="OUTR Seminar Report Word document not found.")
+    return FileResponse(
+        path=str(docx_path),
+        filename="FINAL_SEMINAR_REPORT_OUTR.docx",
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
+@app.get("/api/report/final/pdf")
+@app.head("/api/report/final/pdf")
+async def download_final_report_pdf():
+    """Serves the official formatted OUTR Seminar Report PDF (.pdf)."""
+    pdf_path = Path(__file__).resolve().parent.parent / "paper" / "FINAL_SEMINAR_REPORT_OUTR.pdf"
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="OUTR Seminar Report PDF not found.")
+    return FileResponse(
+        path=str(pdf_path),
+        filename="FINAL_SEMINAR_REPORT_OUTR.pdf",
+        media_type="application/pdf"
+    )
+
