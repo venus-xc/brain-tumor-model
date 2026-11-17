@@ -1,32 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Brain Tumor AI Diagnostic &amp; Monitoring Workstation</title>
+  <title>Brain MRI Analysis &amp; Longitudinal Monitoring (Academic Prototype)</title>
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Prominent Academic Disclaimer Banner -->
+  <aside aria-label="Disclaimer" class="bg-amber-50 border-b border-amber-200 px-6 py-2 text-center text-xs text-amber-900 font-medium">
+    Academic decision-support prototype — not for clinical diagnosis. Evaluated on Sartaj (Bhuvaji et al., 2020) and Figshare (Cheng et al.) benchmark datasets.
+  </aside>
 
   <!-- Top Navigation Bar -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 py-3 shadow-sm">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-      
+
       <!-- Brand & Project Info -->
       <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
-          <i data-lucide="activity" class="w-5 h-5"></i>
+        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm flex-shrink-0 font-bold text-sm">
+          MRI
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <h1 class="text-sm font-bold tracking-tight text-slate-900 uppercase">Neuro-AI PACS Workstation</h1>
-            <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-slate-100 text-slate-700 border border-slate-200">IEEE Standard</span>
+            <h1 class="text-sm font-bold tracking-tight text-slate-900 uppercase">Brain MRI Decision-Support System</h1>
+            <span id="deviceBadge" class="px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider rounded bg-slate-100 text-slate-700 border border-slate-200">DEVICE: INITIALIZING</span>
           </div>
           <p class="text-xs text-slate-500">
-            Brain Tumor Detection &amp; Longitudinal Monitoring &bull; Mrs. Swarna Lata Pati (Guide) &bull; Chinmayee Patra &amp; Shruti Sameekshya Dehury (OUTR)
+            B.Tech Final Year Project &bull; Mrs. Swarna Lata Pati (Guide) &bull; Chinmayee Patra &amp; Shruti Sameekshya Dehury (OUTR Bhubaneswar)
           </p>
         </div>
       </div>
@@ -41,13 +48,13 @@
           <i data-lucide="history" class="w-3.5 h-3.5"></i>
           <span>Longitudinal Monitoring</span>
         </button>
-        <button onclick="switchTab('ieee')" id="tab-btn-ieee" class="tab-btn px-3 py-1.5 text-xs font-medium rounded-md flex items-center space-x-1.5 transition">
-          <i data-lucide="award" class="w-3.5 h-3.5 text-amber-600"></i>
-          <span>IEEE Benchmarks</span>
+        <button onclick="switchTab('evaluation')" id="tab-btn-evaluation" class="tab-btn px-3 py-1.5 text-xs font-medium rounded-md flex items-center space-x-1.5 transition">
+          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-blue-600"></i>
+          <span>Model Evaluation</span>
         </button>
         <button onclick="switchTab('report')" id="tab-btn-report" class="tab-btn px-3 py-1.5 text-xs font-medium rounded-md flex items-center space-x-1.5 transition">
           <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-          <span>Clinical Report</span>
+          <span>Academic PDF Report</span>
         </button>
         <button onclick="switchTab('methodology')" id="tab-btn-methodology" class="tab-btn px-3 py-1.5 text-xs font-medium rounded-md flex items-center space-x-1.5 transition">
           <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
@@ -67,30 +74,38 @@
       <!-- Preset Bar & Upload Action -->
       <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-          <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold mr-1">Benchmark Presets:</span>
+          <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold mr-1">Benchmark Test Scans:</span>
           <button onclick="loadSample('glioma')" class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200 flex items-center space-x-1.5 transition">
             <span class="w-2 h-2 rounded-full bg-red-500"></span>
-            <span>Glioma (WHO IV)</span>
+            <span>Glioma (Sartaj)</span>
           </button>
           <button onclick="loadSample('meningioma')" class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200 flex items-center space-x-1.5 transition">
             <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>Meningioma</span>
+            <span>Meningioma (Sartaj)</span>
           </button>
           <button onclick="loadSample('pituitary')" class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200 flex items-center space-x-1.5 transition">
             <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-            <span>Pituitary Adenoma</span>
+            <span>Pituitary (Sartaj)</span>
           </button>
           <button onclick="loadSample('normal')" class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200 flex items-center space-x-1.5 transition">
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Healthy / No Tumor</span>
+            <span>Normal / No Tumor</span>
+          </button>
+          <button onclick="loadSample('figshare_1')" class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200 flex items-center space-x-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+            <span>Figshare Test Slice 1</span>
+          </button>
+          <button onclick="loadSample('figshare_2')" class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200 flex items-center space-x-1.5 transition">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span>Figshare Test Slice 2</span>
           </button>
         </div>
 
         <div>
           <label class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer flex items-center space-x-2 transition shadow-sm">
             <i data-lucide="upload" class="w-4 h-4"></i>
-            <span>Upload MRI Scan</span>
-            <input type="file" id="fileInput" class="hidden" accept="image/*,.dcm" onchange="handleFileUpload(event)">
+            <span>Upload MRI Slice</span>
+            <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFileUpload(event)">
           </label>
         </div>
       </div>
@@ -101,16 +116,16 @@
         <!-- Left Column: Visual Viewport & Controls (7 cols) -->
         <div class="lg:col-span-7 space-y-4">
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-            
+
             <!-- Viewport Header & Layer Mode Switcher -->
             <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 gap-2">
               <div class="flex items-center space-x-2">
                 <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i>
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Radiologic Viewport</h2>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">MRI Visual Viewport</h2>
               </div>
               <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs flex-wrap gap-1">
                 <button onclick="setViewMode('original')" id="btn-mode-orig" class="px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">MRI</button>
-                <button onclick="setViewMode('segmentation')" id="btn-mode-seg" class="px-2.5 py-1 rounded text-xs font-semibold bg-blue-600 text-white shadow-sm transition">Attention U-Net</button>
+                <button onclick="setViewMode('segmentation')" id="btn-mode-seg" class="px-2.5 py-1 rounded text-xs font-semibold bg-blue-600 text-white shadow-sm transition">Delineation</button>
                 <button onclick="setViewMode('gradcam')" id="btn-mode-cam" class="px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">Grad-CAM</button>
                 <button onclick="setViewMode('gradcam_pp')" id="btn-mode-cam-pp" class="px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">Grad-CAM++</button>
                 <button onclick="setViewMode('attention_gate')" id="btn-mode-ag" class="px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">Attention Gate</button>
@@ -121,14 +136,14 @@
             <!-- Image Canvas Frame -->
             <div class="relative aspect-square max-h-[440px] mx-auto bg-slate-950 rounded-lg overflow-hidden border border-slate-300 flex items-center justify-center group shadow-inner">
               <img id="viewerImage" src="/static/samples/sample_glioma.png" alt="Brain MRI Viewport" class="w-full h-full object-contain select-none">
-              
-              <!-- Clean HUD Overlays -->
+
+              <!-- HUD Overlays -->
               <div class="absolute inset-0 pointer-events-none p-3 flex flex-col justify-between">
-                <div class="self-start text-[10px] font-mono text-slate-800 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-300 shadow-sm">
-                  AXIAL T1-CE &bull; 224x224 &bull; 0.94mm/px
+                <div id="hudSliceInfo" class="self-start text-[10px] font-mono text-slate-800 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-300 shadow-sm">
+                  AXIAL T1-CE &bull; 2D Index Slice
                 </div>
                 <div id="hudCoordinates" class="self-end text-[10px] font-mono text-slate-800 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-300 shadow-sm">
-                  Attention U-Net Overlay Active
+                  Lesion Overlay Active
                 </div>
               </div>
 
@@ -139,27 +154,40 @@
               </div>
             </div>
 
-            <!-- Parameters & Sliders Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
-                <label class="block text-slate-600 font-medium text-xs">U-Net Architecture</label>
-                <select id="selectSegArch" onchange="changeSegArchitecture(this.value)" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  <option value="attention_unet" selected>Attention U-Net (IEEE TMI)</option>
-                  <option value="standard_unet">Standard U-Net</option>
+            <!-- Model Selection & Interactive Parameters Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+              <!-- Classifier Selector -->
+              <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
+                <label for="selectClassifier" class="block text-slate-600 font-medium text-xs">Classifier</label>
+                <select id="selectClassifier" onchange="changeClassifier(this.value)" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="effb0" selected>EfficientNet-B0 (transfer learning)</option>
+                  <option value="secnn">SE-CNN</option>
+                  <option value="cnn">Custom CNN</option>
+                  <option value="svm">HOG + SVM</option>
                 </select>
               </div>
 
-              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
-                <div class="flex justify-between text-xs">
-                  <span class="text-slate-600 font-medium">Heatmap Alpha</span>
-                  <span id="valAlpha" class="text-blue-600 font-mono font-bold">0.45</span>
-                </div>
-                <input type="range" id="sliderAlpha" min="0.1" max="0.9" step="0.05" value="0.45" oninput="updateAlpha(this.value)" class="w-full accent-blue-600 cursor-pointer">
+              <!-- Segmenter Selector -->
+              <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
+                <label for="selectSegArch" class="block text-slate-600 font-medium text-xs">Segmenter</label>
+                <select id="selectSegArch" onchange="changeSegArchitecture(this.value)" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="attunet" selected>Attention U-Net</option>
+                  <option value="unet">U-Net</option>
+                </select>
               </div>
 
-              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
+              <!-- Pixel Spacing Input -->
+              <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
                 <div class="flex justify-between text-xs">
-                  <span class="text-slate-600 font-medium">Mask Threshold</span>
+                  <label for="inputPixelSpacing" class="text-slate-600 font-medium">Pixel Spacing (mm)</label>
+                </div>
+                <input type="number" id="inputPixelSpacing" step="0.05" min="0.1" max="5.0" placeholder="e.g. 0.94" onchange="updatePixelSpacing(this.value)" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500">
+              </div>
+
+              <!-- Mask Threshold Slider -->
+              <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1">
+                <div class="flex justify-between text-xs">
+                  <span class="text-slate-600 font-medium">Threshold</span>
                   <span id="valThresh" class="text-blue-600 font-mono font-bold">0.50</span>
                 </div>
                 <input type="range" id="sliderThresh" min="0.2" max="0.8" step="0.05" value="0.50" oninput="updateThreshold(this.value)" class="w-full accent-blue-600 cursor-pointer">
@@ -169,13 +197,13 @@
           </div>
         </div>
 
-        <!-- Right Column: Findings & Quantitative Metrics (5 cols) -->
+        <!-- Right Column: Findings & 2D Planar Metrics (5 cols) -->
         <div class="lg:col-span-5 space-y-4">
-          
-          <!-- Primary Diagnosis Card -->
+
+          <!-- Primary Prediction Card -->
           <div id="diagnosisCard" class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Primary Diagnosis</span>
+              <span class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Model Classification</span>
               <span id="tumorStatusBadge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-50 text-red-700 border border-red-200">LESION DETECTED</span>
             </div>
 
@@ -185,59 +213,59 @@
                 <span id="confidenceScore" class="text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-mono">99.4% Confidence</span>
               </div>
               <p id="diagnosisDescription" class="text-xs text-slate-600 mt-2 leading-relaxed">
-                Infiltrative neuroepithelial primary brain tumor displaying heterogeneous core and diffuse edema boundaries.
+                Infiltrative intra-axial neuroepithelial lesion evaluated on held-out test split.
               </p>
             </div>
 
             <!-- Softmax Probability Distribution -->
             <div class="space-y-2 pt-2 border-t border-slate-100">
-              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Classification Distribution</div>
+              <div class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Class Probabilities</div>
               <div id="classProbabilities" class="space-y-2 text-xs">
-                <!-- Dynamically populated by app.js -->
+                <!-- Populated dynamically -->
               </div>
             </div>
           </div>
 
-          <!-- Quantitative Volumetric & Morphometrics Card -->
+          <!-- Quantitative 2D Planar Measurements Card -->
           <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <div class="flex items-center space-x-2">
                 <i data-lucide="ruler" class="w-4 h-4 text-emerald-600"></i>
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Morphometrics &amp; Volumetric Analysis</h3>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">2D Planar Measurements</h3>
               </div>
-              <span class="text-[10px] text-slate-400 font-mono">dz = 3.0mm</span>
+              <span id="metricSpacingSource" class="text-[10px] text-slate-500 font-mono">Uncalibrated (pixels)</span>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
               <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div class="text-[11px] text-slate-500">Estimated Volume</div>
-                <div id="metricVolume" class="text-lg font-bold text-slate-900 font-mono mt-0.5">4.46 cm³</div>
-                <div id="metricVolumeMm" class="text-[10px] text-slate-400">4,461 mm³</div>
+                <div class="text-[11px] text-slate-500">Planar Area</div>
+                <div id="metricArea" class="text-base font-bold text-slate-900 font-mono mt-0.5">--</div>
+                <div id="metricAreaCm" class="text-[10px] text-slate-400">N_pixels &times; &Delta;x &times; &Delta;y</div>
               </div>
 
               <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div class="text-[11px] text-slate-500">Cross-Sectional Area</div>
-                <div id="metricArea" class="text-lg font-bold text-slate-900 font-mono mt-0.5">1.49 cm²</div>
-                <div id="metricAreaMm" class="text-[10px] text-slate-400">149 mm²</div>
+                <div class="text-[11px] text-slate-500">Longest Diameter (d1)</div>
+                <div id="metricD1" class="text-base font-bold text-slate-900 font-mono mt-0.5">--</div>
+                <div class="text-[10px] text-slate-400">PCA Major Axis</div>
               </div>
 
               <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div class="text-[11px] text-slate-500">Major × Minor Axis</div>
-                <div id="metricAxes" class="text-xs font-bold text-slate-900 font-mono mt-1">53.1 × 39.4 mm</div>
-                <div class="text-[10px] text-slate-400">Orthogonal RECIST</div>
+                <div class="text-[11px] text-slate-500">Perpendicular (d2)</div>
+                <div id="metricD2" class="text-base font-bold text-slate-900 font-mono mt-0.5">--</div>
+                <div class="text-[10px] text-slate-400">PCA Orthogonal Span</div>
               </div>
 
               <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                <div class="text-[11px] text-slate-500">Sphericity Index</div>
-                <div id="metricSphericity" class="text-xs font-bold text-emerald-700 font-mono mt-1">0.945</div>
-                <div class="text-[10px] text-slate-400">1.0 = Circular</div>
+                <div class="text-[11px] text-slate-500">Product (d1 &times; d2)</div>
+                <div id="metricProduct" class="text-base font-bold text-slate-900 font-mono mt-0.5">--</div>
+                <div class="text-[10px] text-slate-400">RANO 2D Product</div>
               </div>
             </div>
 
-            <!-- Quick Action: Export Clinical PDF -->
+            <!-- Quick Action: Export Academic PDF -->
             <button onclick="triggerPdfExport()" class="w-full py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center justify-center space-x-2 border border-slate-300 transition">
               <i data-lucide="download" class="w-4 h-4 text-blue-600"></i>
-              <span>Generate Clinical PDF Report</span>
+              <span>Generate Academic Analysis Report</span>
             </button>
           </div>
 
@@ -249,16 +277,16 @@
 
     <!-- ==================== TAB 2: LONGITUDINAL MONITORING ==================== -->
     <div id="tab-longitudinal" class="tab-content hidden space-y-6">
-      
+
       <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-3">
           <div>
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
               <i data-lucide="history" class="w-4 h-4 text-blue-600"></i>
-              <span>Longitudinal Examination &amp; Treatment-Response Assessment</span>
+              <span>Longitudinal Examination &amp; RANO 2D Criteria Response</span>
             </h2>
             <p class="text-xs text-slate-500 mt-0.5">
-              Automated multi-timepoint comparison (Baseline vs. Follow-up) evaluated under RANO and RECIST 1.1 clinical criteria.
+              Automated 2D planar perpendicular product comparison (%&Delta;P) between baseline (P0) and follow-up (P1) timepoints.
             </p>
           </div>
           <button onclick="runLongitudinalAnalysis()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center space-x-2 shadow-sm transition">
@@ -269,7 +297,7 @@
 
         <!-- 3-Panel Visual Comparison Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          
+
           <!-- Baseline Examination -->
           <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
             <div class="flex justify-between items-center text-xs">
@@ -280,8 +308,8 @@
               <img id="longBaseImg" src="/static/samples/longitudinal_baseline.png" alt="Baseline MRI" class="w-full h-full object-contain">
             </div>
             <div class="text-xs text-slate-600 space-y-1 pt-1">
-              <div class="flex justify-between"><span>Volume:</span> <b id="longBaseVol" class="text-slate-900 font-mono">4.46 cm³</b></div>
-              <div class="flex justify-between"><span>Area:</span> <b id="longBaseArea" class="text-slate-900 font-mono">1.49 cm²</b></div>
+              <div class="flex justify-between"><span>Area:</span> <b id="longBaseArea" class="text-slate-900 font-mono">--</b></div>
+              <div class="flex justify-between"><span>Product (P0):</span> <b id="longBaseProd" class="text-slate-900 font-mono">--</b></div>
             </div>
           </div>
 
@@ -289,22 +317,22 @@
           <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
             <div class="flex justify-between items-center text-xs">
               <span class="font-semibold text-slate-800">Timepoint 2: Follow-up Scan</span>
-              <span class="text-[10px] font-mono text-blue-700 font-semibold">Post-Chemoradiotherapy</span>
+              <span class="text-[10px] font-mono text-blue-700 font-semibold">Follow-up Interval</span>
             </div>
             <div class="aspect-square bg-slate-950 rounded border border-slate-300 overflow-hidden flex items-center justify-center">
               <img id="longFollowImg" src="/static/samples/longitudinal_followup.png" alt="Follow-up MRI" class="w-full h-full object-contain">
             </div>
             <div class="text-xs text-slate-600 space-y-1 pt-1">
-              <div class="flex justify-between"><span>Volume:</span> <b id="longFollowVol" class="text-slate-900 font-mono">0.00 cm³</b></div>
-              <div class="flex justify-between"><span>Area:</span> <b id="longFollowArea" class="text-slate-900 font-mono">0.00 cm²</b></div>
+              <div class="flex justify-between"><span>Area:</span> <b id="longFollowArea" class="text-slate-900 font-mono">--</b></div>
+              <div class="flex justify-between"><span>Product (P1):</span> <b id="longFollowProd" class="text-slate-900 font-mono">--</b></div>
             </div>
           </div>
 
           <!-- Spatial Delta Progression Map -->
           <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
             <div class="flex justify-between items-center text-xs">
-              <span class="font-semibold text-slate-800">Spatial Delta Map</span>
-              <span class="text-[10px] font-mono text-emerald-700 font-semibold">Complete Resolution</span>
+              <span class="font-semibold text-slate-800">Spatial Difference Map</span>
+              <span id="longDeltaBadge" class="text-[10px] font-mono text-blue-700 font-semibold">Response Overlay</span>
             </div>
             <div class="aspect-square bg-slate-950 rounded border border-slate-300 overflow-hidden flex items-center justify-center relative">
               <img id="longDeltaImg" src="/static/samples/sample_glioma.png" alt="Delta Difference Map" class="w-full h-full object-contain">
@@ -315,20 +343,23 @@
               </div>
             </div>
             <div class="text-xs text-slate-600 space-y-1 pt-1">
-              <div class="flex justify-between"><span>Volume Change:</span> <b id="longDeltaVol" class="text-emerald-700 font-mono">-4.46 cm³ (-100%)</b></div>
-              <div class="flex justify-between"><span>Monthly Velocity:</span> <b id="longVelocity" class="text-slate-800 font-mono">-1.49 cm³/mo</b></div>
+              <div class="flex justify-between"><span>Product Change (%&Delta;P):</span> <b id="longDeltaProd" class="text-blue-700 font-mono">--</b></div>
+              <div class="flex justify-between"><span>Criteria:</span> <span class="text-slate-500 font-mono text-[10px]">PR &le; -50% | PD &ge; +25%</span></div>
             </div>
           </div>
 
         </div>
 
         <!-- RANO Verdict Box -->
-        <div id="longitudinalVerdictBox" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 flex items-start space-x-3">
-          <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div id="longitudinalVerdictBox" class="p-4 rounded-lg bg-blue-50 border border-blue-200 flex items-start space-x-3">
+          <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
           <div>
-            <div class="text-xs font-bold text-emerald-900 uppercase tracking-wide" id="longVerdictTitle">RANO Assessment: Complete Response (CR)</div>
-            <p class="text-xs text-emerald-800 mt-1 leading-relaxed" id="longVerdictText">
-              Complete disappearance of all enhancing measurable and nonmeasurable lesions following therapeutic intervention.
+            <div class="text-xs font-bold text-blue-900 uppercase tracking-wide" id="longVerdictTitle">RANO Assessment: Partial Response (PR)</div>
+            <p class="text-xs text-blue-800 mt-1 leading-relaxed" id="longVerdictText">
+              Significant reduction in bi-dimensional perpendicular product (%&Delta;P &le; -50%).
+            </p>
+            <p class="text-[11px] text-slate-500 mt-1 italic" id="longVerdictNote">
+              Imaging change only. Does not account for clinical status, corticosteroid dose, or non-enhancing tumor progression.
             </p>
           </div>
         </div>
@@ -337,19 +368,20 @@
 
     </div>
 
-    <!-- ==================== TAB 3: IEEE BENCHMARKS ==================== -->
-    <div id="tab-ieee" class="tab-content hidden space-y-6">
-      
-      <!-- Manuscript Header & Download Buttons -->
+    <!-- ==================== TAB 3: MODEL EVALUATION ==================== -->
+    <div id="tab-evaluation" class="tab-content hidden space-y-6">
+
+      <!-- Evaluation Header & Download Buttons -->
       <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div>
           <div class="flex items-center space-x-2">
-            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-blue-50 text-blue-700 border border-blue-200">IEEE Conference Manuscript</span>
-            <span class="text-xs text-slate-500">Benchmark Standards</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-blue-50 text-blue-700 border border-blue-200">Verified Empirical Evaluation</span>
+            <span class="text-xs text-slate-500">Public Benchmark Datasets</span>
           </div>
-          <h2 class="text-base font-bold text-slate-900 mt-1">Deep Multi-Task Learning for Brain Tumor Detection, Segmentation, XAI &amp; Monitoring</h2>
+          <h2 class="text-base font-bold text-slate-900 mt-1">Experimental Results &amp; Leakage-Free Evaluation Matrix</h2>
           <p class="text-xs text-slate-600 mt-0.5">
-            <b>Authors:</b> Chinmayee Patra (23110206), Shruti Sameekshya Dehury (23110234) &bull; <b>Supervisor:</b> Mrs. Swarna Lata Pati &bull; <i>School of Computer Science, OUTR Bhubaneswar</i>
+            <b>Authors:</b> Chinmayee Patra (23110206), Shruti Sameekshya Dehury (23110234) &bull; <b>Supervisor:</b>
+            Mrs. Swarna Lata Pati &bull; <i>Department of CSE, OUTR Bhubaneswar</i>
           </p>
         </div>
 
@@ -362,174 +394,90 @@
             <i data-lucide="file" class="w-3.5 h-3.5"></i>
             <span>Seminar Report (PDF)</span>
           </a>
-          <a href="/api/ieee/paper/download" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs flex items-center space-x-1.5 transition shadow-sm">
-            <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
-            <span>IEEE Paper (PDF)</span>
-          </a>
-          <a href="/api/ieee/latex/download" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center space-x-1.5 border border-slate-300 transition">
-            <i data-lucide="code" class="w-3.5 h-3.5"></i>
-            <span>LaTeX Source (.tex)</span>
-          </a>
-          <a href="/api/ieee/report/download" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs flex items-center space-x-1.5 border border-slate-300 transition">
-            <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
-            <span>Thesis (.md)</span>
-          </a>
         </div>
       </div>
 
-      <!-- Quantitative Scorecard Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Classification Accuracy</div>
-          <div class="text-2xl font-bold text-blue-600 font-mono mt-1">98.65%</div>
-          <div class="text-[10px] text-slate-400">Figshare Benchmark</div>
+      <!-- Models Evaluation Table -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center space-x-2">
+            <i data-lucide="table" class="w-4 h-4 text-blue-600"></i>
+            <span>Classification &amp; Segmentation Models Comparison</span>
+          </h3>
+          <span class="text-xs text-slate-500 font-mono">Test Set (Single Evaluation)</span>
         </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Macro F1-Score</div>
-          <div class="text-2xl font-bold text-slate-900 font-mono mt-1">98.55%</div>
-          <div class="text-[10px] text-slate-400">4-Class Balanced Average</div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Dice Score (DSC)</div>
-          <div class="text-2xl font-bold text-emerald-600 font-mono mt-1">0.942</div>
-          <div class="text-[10px] text-slate-400">Attention U-Net Lesion Dice</div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <div class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Area Under ROC (AUC)</div>
-          <div class="text-2xl font-bold text-purple-600 font-mono mt-1">0.996</div>
-          <div class="text-[10px] text-slate-400">Multi-Class Macro AUC</div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse" id="evaluationTable">
+            <thead>
+              <tr class="text-slate-500 bg-slate-50 border-b border-slate-200">
+                <th class="p-2.5 font-medium">Model Architecture</th>
+                <th class="p-2.5 font-medium">Dataset Split</th>
+                <th class="p-2.5 text-right font-medium">Parameters</th>
+                <th class="p-2.5 text-right font-medium">Test Acc (%)</th>
+                <th class="p-2.5 text-right font-medium">Macro F1</th>
+                <th class="p-2.5 text-right font-medium">ROC-AUC</th>
+                <th class="p-2.5 text-right font-medium">Dice / IoU</th>
+              </tr>
+            </thead>
+            <tbody id="evaluationTableBody" class="divide-y divide-slate-100 font-mono text-slate-700">
+              <!-- Dynamically populated from /api/metrics -->
+              <tr><td colspan="7" class="p-4 text-center text-slate-400 font-sans">Loading evaluated metrics...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Confusion Matrix & Literature Benchmark Grid -->
+      <!-- Leakage Audit & Segmentation Findings Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Left 6 cols: Confusion Matrix -->
-        <div class="lg:col-span-6 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center space-x-2">
-              <i data-lucide="grid" class="w-4 h-4 text-blue-600"></i>
-              <span>Confusion Matrix (898 Test Samples)</span>
-            </h3>
-            <span class="text-xs font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Acc: 98.65%</span>
-          </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-center text-xs border-collapse">
-              <thead>
-                <tr class="text-slate-500 bg-slate-50 border-b border-slate-200">
-                  <th class="p-2 text-left font-medium">Actual \ Pred</th>
-                  <th class="p-2 font-medium">Normal</th>
-                  <th class="p-2 font-medium">Glioma</th>
-                  <th class="p-2 font-medium">Meningioma</th>
-                  <th class="p-2 font-medium">Pituitary</th>
-                  <th class="p-2 font-medium">Sens. (%)</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 font-mono text-slate-800">
-                <tr>
-                  <td class="p-2 text-left font-sans text-slate-700 font-medium">Normal</td>
-                  <td class="p-2 bg-emerald-50 text-emerald-800 font-bold">142</td>
-                  <td class="p-2 text-slate-400">1</td>
-                  <td class="p-2 text-slate-400">0</td>
-                  <td class="p-2 text-slate-400">1</td>
-                  <td class="p-2 text-emerald-700 font-bold">98.6%</td>
-                </tr>
-                <tr>
-                  <td class="p-2 text-left font-sans text-slate-700 font-medium">Glioma</td>
-                  <td class="p-2 text-slate-400">0</td>
-                  <td class="p-2 bg-emerald-50 text-emerald-800 font-bold">288</td>
-                  <td class="p-2 text-slate-400">3</td>
-                  <td class="p-2 text-slate-400">1</td>
-                  <td class="p-2 text-emerald-700 font-bold">98.6%</td>
-                </tr>
-                <tr>
-                  <td class="p-2 text-left font-sans text-slate-700 font-medium">Meningioma</td>
-                  <td class="p-2 text-slate-400">1</td>
-                  <td class="p-2 text-slate-400">2</td>
-                  <td class="p-2 bg-emerald-50 text-emerald-800 font-bold">235</td>
-                  <td class="p-2 text-slate-400">2</td>
-                  <td class="p-2 text-emerald-700 font-bold">97.9%</td>
-                </tr>
-                <tr>
-                  <td class="p-2 text-left font-sans text-slate-700 font-medium">Pituitary</td>
-                  <td class="p-2 text-slate-400">0</td>
-                  <td class="p-2 text-slate-400">1</td>
-                  <td class="p-2 text-slate-400">2</td>
-                  <td class="p-2 bg-emerald-50 text-emerald-800 font-bold">219</td>
-                  <td class="p-2 text-emerald-700 font-bold">98.7%</td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Left 6 cols: Data Leakage Audit -->
+        <div class="lg:col-span-6 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center space-x-2">
+              <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600"></i>
+              <span>Dataset Integrity &amp; Leakage Audit (Sartaj Benchmark)</span>
+            </h3>
           </div>
-          <div class="text-[11px] text-slate-500 leading-relaxed pt-1">
-            Diagonal highlights true positives (TP). High specificity (&gt; 99.2%) demonstrates reliable distinction between dural meningiomas and sellar pituitary adenomas.
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Near-duplicate image detection was performed via 32&times;32 cosine similarity (&ge; 0.98) and connected-component clustering. In the raw official split, near-duplicate images existed across training and testing partitions, artificially inflating reported scores.
+          </p>
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <div class="text-[11px] text-slate-500">Duplicate Groups Across Split</div>
+              <div id="leakagePairs" class="text-base font-bold text-amber-700 font-mono mt-0.5">69 pairs</div>
+              <div class="text-[10px] text-slate-400">Official Sartaj Split</div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <div class="text-[11px] text-slate-500">Clean 70/15/15 Split Leakage</div>
+              <div class="text-base font-bold text-emerald-700 font-mono mt-0.5">0 pairs</div>
+              <div class="text-[10px] text-slate-400">Stratified Group K-Fold</div>
+            </div>
           </div>
         </div>
 
-        <!-- Right 6 cols: SOTA Comparison Table -->
-        <div class="lg:col-span-6 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <!-- Right 6 cols: Patient-Level Segmentation Audit -->
+        <div class="lg:col-span-6 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center space-x-2">
-              <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-600"></i>
-              <span>Comparison with Published Literature</span>
+              <i data-lucide="users" class="w-4 h-4 text-emerald-600"></i>
+              <span>Patient-Level Segmentation (Figshare Benchmark)</span>
             </h3>
-            <span class="text-xs text-slate-500 font-mono">Figshare / BraTS</span>
           </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr class="text-slate-500 bg-slate-50 border-b border-slate-200">
-                  <th class="p-2 font-medium">Study / Model</th>
-                  <th class="p-2 font-medium">Year</th>
-                  <th class="p-2 text-right font-medium">Acc (%)</th>
-                  <th class="p-2 text-right font-medium">F1 (%)</th>
-                  <th class="p-2 text-right font-medium">Dice</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 font-mono text-slate-700">
-                <tr>
-                  <td class="p-2 font-sans">Cheng et al. (IEEE TITB)</td>
-                  <td class="p-2 text-slate-400">2015</td>
-                  <td class="p-2 text-right">91.28</td>
-                  <td class="p-2 text-right">91.05</td>
-                  <td class="p-2 text-right text-slate-400">N/A</td>
-                </tr>
-                <tr>
-                  <td class="p-2 font-sans">Afshar et al. (IEEE ICIP)</td>
-                  <td class="p-2 text-slate-400">2018</td>
-                  <td class="p-2 text-right">90.89</td>
-                  <td class="p-2 text-right">90.65</td>
-                  <td class="p-2 text-right text-slate-400">N/A</td>
-                </tr>
-                <tr>
-                  <td class="p-2 font-sans">Gumaei et al. (IEEE Access)</td>
-                  <td class="p-2 text-slate-400">2019</td>
-                  <td class="p-2 text-right">94.23</td>
-                  <td class="p-2 text-right">94.00</td>
-                  <td class="p-2 text-right text-slate-400">N/A</td>
-                </tr>
-                <tr>
-                  <td class="p-2 font-sans">Bodapati et al. (IEEE Access)</td>
-                  <td class="p-2 text-slate-400">2021</td>
-                  <td class="p-2 text-right">95.23</td>
-                  <td class="p-2 text-right">95.10</td>
-                  <td class="p-2 text-right text-slate-400">N/A</td>
-                </tr>
-                <tr class="bg-blue-50 text-blue-900 font-bold">
-                  <td class="p-2 font-sans"><b>Proposed (Chinmayee et al.)</b></td>
-                  <td class="p-2">2026</td>
-                  <td class="p-2 text-right text-blue-700">98.65</td>
-                  <td class="p-2 text-right text-blue-700">98.55</td>
-                  <td class="p-2 text-right text-blue-700">0.942</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
-            <span class="text-blue-700 font-semibold">Contribution:</span> Squeeze-and-Excitation channel attention combined with spatial Attention Gates delivers an accuracy gain of <b>+3.42%</b> over Bodapati et al. and <b>+5.1%</b> Dice improvement over standard U-Net.
+          <p class="text-xs text-slate-600 leading-relaxed">
+            3,064 T1-CE slices partitioned strictly by Patient ID (PID) via GroupShuffleSplit (seed 42). Zero patient overlap between training (163 PIDs), validation (35 PIDs), and test (35 PIDs) sets prevents slice-level data leakage.
+          </p>
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <div class="text-[11px] text-slate-500">Test Cohort</div>
+              <div id="segTestInfo" class="text-base font-bold text-slate-900 font-mono mt-0.5">454 slices (35 patients)</div>
+              <div class="text-[10px] text-slate-400">Strictly Patient-Held-Out</div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <div class="text-[11px] text-slate-500">Shared Patients Across Subsets</div>
+              <div class="text-base font-bold text-emerald-700 font-mono mt-0.5">0</div>
+              <div class="text-[10px] text-slate-400">Zero Patient Leakage</div>
+            </div>
           </div>
         </div>
 
@@ -537,56 +485,62 @@
 
     </div>
 
-    <!-- ==================== TAB 4: CLINICAL PDF REPORT ==================== -->
+    <!-- ==================== TAB 4: ACADEMIC PDF REPORT ==================== -->
     <div id="tab-report" class="tab-content hidden space-y-6">
-      
+
       <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm max-w-2xl mx-auto space-y-5">
         <div class="border-b border-slate-100 pb-3">
           <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center space-x-2">
             <i data-lucide="file-check" class="w-4 h-4 text-blue-600"></i>
-            <span>Generate Clinical PDF Radiology Report</span>
+            <span>Generate Brain MRI Analysis Report (Academic Prototype)</span>
           </h2>
           <p class="text-xs text-slate-500 mt-1">
-            Builds a standardized multi-page diagnostic PDF report including patient demographics, multi-modal imaging triad, quantitative metrics, and automated radiological impression.
+            Builds a standardized academic PDF analysis report including 2D planar measurements, model prediction distributions, and interpretability visualizations.
           </p>
         </div>
 
         <form id="reportForm" onsubmit="handleReportGenerate(event)" class="space-y-4 text-xs">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-slate-700 font-medium mb-1">Patient Full Name</label>
-              <input type="text" id="repPatientName" value="Mrs. Chinmayee Patra" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+              <label for="repPatientName" class="block text-slate-700 font-medium mb-1">Subject Full Name / Label</label>
+              <input type="text" id="repPatientName" value="Anonymous Research Subject" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500">
             </div>
             <div>
-              <label class="block text-slate-700 font-medium mb-1">Patient ID / Case #</label>
-              <input type="text" id="repPatientId" value="MRN-2026-BTR-701" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+              <label for="repPatientId" class="block text-slate-700 font-medium mb-1">Subject ID</label>
+              <input type="text" id="repPatientId" value="SUBJ-2026-OUTR-042" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500">
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-slate-700 font-medium mb-1">Age / Sex</label>
-              <input type="text" id="repAgeGender" value="52 / F" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+              <label for="repClassifier" class="block text-slate-700 font-medium mb-1">Classification Backbone</label>
+              <select id="repClassifier" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="effb0" selected>EfficientNet-B0 (transfer learning)</option>
+                <option value="secnn">SE-CNN</option>
+                <option value="cnn">Custom CNN</option>
+                <option value="svm">HOG + SVM</option>
+              </select>
             </div>
             <div>
-              <label class="block text-slate-700 font-medium mb-1">Target Diagnostic Scan</label>
-              <select id="repSampleKey" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                <option value="glioma" selected>Glioma Case Study</option>
-                <option value="meningioma">Meningioma Case Study</option>
-                <option value="pituitary">Pituitary Adenoma Case Study</option>
-                <option value="normal">Healthy / Normal Brain</option>
+              <label for="repSampleKey" class="block text-slate-700 font-medium mb-1">Target MRI Slice</label>
+              <select id="repSampleKey" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="glioma" selected>Glioma (Sartaj test set)</option>
+                <option value="meningioma">Meningioma (Sartaj test set)</option>
+                <option value="pituitary">Pituitary (Sartaj test set)</option>
+                <option value="normal">Normal Brain (Sartaj test set)</option>
+                <option value="figshare_1">Figshare Test Patient 1</option>
               </select>
             </div>
           </div>
 
           <div class="flex items-center space-x-2 pt-1">
             <input type="checkbox" id="repIncludeLong" checked class="rounded border-slate-300 text-blue-600 focus:ring-0">
-            <label for="repIncludeLong" class="text-slate-700 font-medium">Include Longitudinal Progression &amp; RANO Criteria Analysis</label>
+            <label for="repIncludeLong" class="text-slate-700 font-medium">Include Longitudinal Progression &amp; RANO 2D Criteria Assessment</label>
           </div>
 
           <button type="submit" id="btnGenerateReport" class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center space-x-2 shadow-sm transition">
             <i data-lucide="download" class="w-4 h-4"></i>
-            <span>Generate &amp; Download PDF Radiology Report</span>
+            <span>Generate &amp; Download Academic PDF Report</span>
           </button>
         </form>
 
@@ -607,54 +561,54 @@
 
     <!-- ==================== TAB 5: METHODOLOGY ==================== -->
     <div id="tab-methodology" class="tab-content hidden space-y-6">
-      
+
       <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-6 max-w-4xl mx-auto">
         <div class="border-b border-slate-100 pb-3">
           <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900">System Architecture &amp; Methodology</h2>
           <p class="text-xs text-slate-500 mt-1">
-            Implementation details corresponding directly to the seminar project objectives and IEEE literature benchmarks.
+            Technical formulation of classification, segmentation, interpretability, and quantitative follow-up analysis.
           </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          
+
           <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
             <div class="flex items-center space-x-2 text-blue-700 font-semibold text-xs uppercase tracking-wide">
               <i data-lucide="layers" class="w-4 h-4"></i>
-              <span>1. Squeeze-and-Excitation ResNet Classifier</span>
+              <span>1. Classification Backbones</span>
             </div>
             <p class="text-slate-600 leading-relaxed">
-              Channel attention recalibration using Global Average Pooling and reduction ratio r=16 (Hu et al., IEEE TPAMI). Differentiates Glioma, Meningioma, Pituitary Adenoma, and Healthy Parenchyma.
+              Comparison across 4 distinct paradigms: classical HOG + SVM (1,764-dim HOG with PCA-150 and RBF kernel), baseline Custom CNN (4 stages, [32, 64, 128, 256]), SE-CNN with Squeeze-and-Excitation channel recalibration (r=16), and fine-tuned EfficientNet-B0 (transfer learning from ImageNet).
             </p>
           </div>
 
           <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
             <div class="flex items-center space-x-2 text-emerald-700 font-semibold text-xs uppercase tracking-wide">
               <i data-lucide="crop" class="w-4 h-4"></i>
-              <span>2. Attention U-Net Segmentation</span>
+              <span>2. Biomedical Lesion Segmentation</span>
             </div>
             <p class="text-slate-600 leading-relaxed">
-              Additive spatial Attention Gates (Oktay et al., IEEE TMI) on skip connections. Dynamically filters out non-lesion background tissue while emphasizing true tumor boundaries.
+              Biomedical U-Net and Attention U-Net (Oktay et al., 2018) trained on 256&times;256 single-channel T1-CE slices with BCEWithLogits + Soft Dice loss. Additive Attention Gates selectively scale feature activations along skip connections to suppress non-tumor parenchyma.
             </p>
           </div>
 
           <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
             <div class="flex items-center space-x-2 text-amber-700 font-semibold text-xs uppercase tracking-wide">
               <i data-lucide="sparkles" class="w-4 h-4"></i>
-              <span>3. Dual Explainable AI (Grad-CAM &amp; Grad-CAM++)</span>
+              <span>3. Dual Explainable AI (XAI)</span>
             </div>
             <p class="text-slate-600 leading-relaxed">
-              Computes first-order and higher-order partial derivatives (Chattopadhyay et al., IEEE TIP). Delivers saliency heatmaps resolving multi-focal lesions and tiny sellar borders.
+              First-order Grad-CAM and higher-order Grad-CAM++ computed via autograd gradients at the final convolutional feature extractor. Verifies that classification decisions originate from the true lesion rather than background skull artifacts.
             </p>
           </div>
 
           <div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
             <div class="flex items-center space-x-2 text-purple-700 font-semibold text-xs uppercase tracking-wide">
               <i data-lucide="git-commit" class="w-4 h-4"></i>
-              <span>4. Longitudinal RANO Modeling</span>
+              <span>4. 2D Planar Morphometrics &amp; RANO</span>
             </div>
             <p class="text-slate-600 leading-relaxed">
-              Multi-timepoint tracking across patient timelines. Computes volumetric delta, growth velocity, and classifies clinical response (Complete Response, Partial Response, Stable Disease, Progressive Disease).
+              Strict 2D measurements on index slices: area = N_pixels &times; &Delta;x &times; &Delta;y, longest diameter d1 (PCA major axis), perpendicular diameter d2, and perpendicular product P = d1 &times; d2. Temporal response categorised under RANO: PR &le; -50%, PD &ge; +25%, CR (complete resolution), SD (stable).
             </p>
           </div>
 
@@ -662,10 +616,11 @@
 
         <div class="p-4 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
           <div class="font-bold">Project Authors &amp; Academic Supervision:</div>
-          <div>Seminar: <i>Brain Tumor Detection and Monitoring Using Artificial Intelligence and Machine Learning</i></div>
+          <div>Project: <i>Brain Tumor Detection and Monitoring Using Artificial Intelligence and Machine Learning</i></div>
           <div>Supervisor: <b>Mrs. Swarna Lata Pati</b>, Assistant Professor</div>
-          <div>Department: <b>School of Computer Science</b>, Odisha University of Technology and Research (OUTR)</div>
-          <div>Students: <b>Chinmayee Patra</b> (Regd. 23110206), <b>Shruti Sameekshya Dehury</b> (Regd. 23110234)</div>
+          <div>Department: <b>Department of Computer Science and Engineering</b></div>
+          <div>Institution: <b>Odisha University of Technology and Research (OUTR)</b>, Bhubaneswar, Odisha, India</div>
+          <div>Student Investigators: <b>Chinmayee Patra</b> (Regd. 23110206), <b>Shruti Sameekshya Dehury</b> (Regd. 23110234)</div>
         </div>
 
       </div>
@@ -676,9 +631,10 @@
 
   <!-- Clean Minimalist Footer -->
   <footer class="border-t border-slate-200 py-3 px-6 text-center text-xs text-slate-500 bg-white">
-    Neuro-AI PACS Workstation &bull; School of Computer Science, OUTR Bhubaneswar &bull; PyTorch, Attention U-Net &amp; FastAPI
+    Academic Decision-Support Prototype &bull; Department of CSE, OUTR Bhubaneswar &bull; PyTorch, Attention U-Net &amp; FastAPI
   </footer>
 
   <script src="/static/js/app.js"></script>
 </body>
+
 </html>
