@@ -1,31 +1,59 @@
+import os
+import json
 import pytest
 import torch
-import numpy as np
-from app.models.classifier import BrainTumorClassifier
+from app.models.cnn import BrainCNN
+from app.models.efficientnet import build_efficientnet_b0
 from app.models.unet import UNet
-from app.models.gradcam import GradCAM
+from app.models.attention_unet import AttentionUNet
+from app.models.classical import extract_hog_features
 
-def test_classifier_architecture():
-    model = BrainTumorClassifier(num_classes=4, in_channels=3)
-    dummy_input = torch.randn(2, 3, 224, 224)
-    logits = model(dummy_input)
-    assert logits.shape == (2, 4), f"Expected shape (2, 4), got {logits.shape}"
-    
-    probs = model.predict_probabilities(dummy_input)
-    assert probs.shape == (2, 4)
-    assert torch.allclose(probs.sum(dim=1), torch.ones(2), atol=1e-5)
 
-def test_unet_segmentation_architecture():
-    model = UNet(in_channels=3, out_channels=1)
-    dummy_input = torch.randn(2, 3, 224, 224)
-    pred = model(dummy_input)
-    assert pred.shape == (2, 1, 224, 224), f"Expected shape (2, 1, 224, 224), got {pred.shape}"
-    assert (pred >= 0.0).all() and (pred <= 1.0).all(), "U-Net predictions must be bounded in [0, 1]"
+def test_brain_cnn_custom():
+    model = BrainCNN(n_classes=4, se=False, in_ch=1)
+    x = torch.randn(2, 1, 128, 128)
+    out = model(x)
+    assert out.shape == (2, 4)
+    params = sum(p.numel() for p in model.parameters())
+    assert params == 1206052
 
-def test_gradcam_hook_and_generation():
-    model = BrainTumorClassifier(num_classes=4, in_channels=3)
-    gradcam = GradCAM(model, model.last_conv_layer)
-    dummy_input = torch.randn(1, 3, 224, 224)
-    heatmap, target_class = gradcam.generate_heatmap(dummy_input)
-    assert heatmap.shape == (224, 224), f"Expected (224, 224), got {heatmap.shape}"
-    assert heatmap.min() >= 0.0 and heatmap.max() <= 1.0, "GradCAM heatmap values must be normalized to [0, 1]"
+
+def test_brain_cnn_secnn():
+    model = BrainCNN(n_classes=4, se=True, in_ch=1)
+    x = torch.randn(2, 1, 128, 128)
+    out = model(x)
+    assert out.shape == (2, 4)
+    params = sum(p.numel() for p in model.parameters())
+    assert params == 1228352
+
+
+def test_efficientnet_b0():
+    model = build_efficientnet_b0(n_classes=4, pretrained=False)
+    x = torch.randn(2, 3, 160, 160)
+    out = model(x)
+    assert out.shape == (2, 4)
+    params = sum(p.numel() for p in model.parameters())
+    assert params == 4012672
+
+
+def test_unet_output_shape():
+    model = UNet(in_channels=1, out_channels=1)
+    x = torch.randn(2, 1, 256, 256)
+    out = model(x)
+    assert out.shape == (2, 1, 256, 256)
+    assert (out >= 0.0).all() and (out <= 1.0).all()
+
+
+def test_attention_unet_output_shape():
+    model = AttentionUNet(in_channels=1, out_channels=1)
+    x = torch.randn(2, 1, 256, 256)
+    out = model(x)
+    assert out.shape == (2, 1, 256, 256)
+    assert (out >= 0.0).all() and (out <= 1.0).all()
+
+
+def test_hog_feature_dimension():
+    import numpy as np
+    dummy_img = (np.random.rand(128, 128) * 255).astype(np.uint8)
+    feat = extract_hog_features(dummy_img, size=128)
+    assert feat.shape == (1764,)
