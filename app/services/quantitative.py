@@ -1,136 +1,135 @@
-import math
+"""Quantitative 2D Morphometrics Engine.
+Calculates 2D planar lesion measurements:
+- area_mm2 = N_pixels * dx * dy (and area_cm2)
+- d1_mm: Longest diameter from PCA major-axis extent of mask coordinates
+- d2_mm: Longest diameter perpendicular to d1 along PCA minor-axis extent
+- product_mm2: d1 * d2 (perpendicular product used in RANO criteria)
+
+Pixel spacing is extracted from DICOM tags or user-supplied pixel_spacing_mm form field.
+If not provided, measurements are reported in pixel units only with spacing_source="not provided".
+"""
+from typing import Optional, Tuple, Union
 import numpy as np
-from scipy import ndimage
-from app.config import DEFAULT_PIXEL_SPACING_MM, DEFAULT_SLICE_THICKNESS_MM
+
 
 class QuantitativeAnalyzer:
-    """
-    Computes rigorous clinical morphometrics, geometry, and volumetric estimations
-    from predicted tumor segmentation masks and MRI intensity data.
-    """
 
-    def __init__(self, pixel_spacing=DEFAULT_PIXEL_SPACING_MM, slice_thickness=DEFAULT_SLICE_THICKNESS_MM):
-        self.dx, self.dy = pixel_spacing  # mm per pixel
-        self.dz = slice_thickness         # mm slice thickness
-        self.pixel_area_mm2 = self.dx * self.dy
-        self.voxel_volume_mm3 = self.pixel_area_mm2 * self.dz
+    def __init__(self, pixel_spacing: Optional[Union[float, Tuple[float, float]]] = None, spacing_source: Optional[str] = None):
+        self.spacing_source = spacing_source
+        if pixel_spacing is not None:
+            if isinstance(pixel_spacing, (int, float)):
+                self.dx = float(pixel_spacing)
+                self.dy = float(pixel_spacing)
+            else:
+                self.dx = float(pixel_spacing[0])
+                self.dy = float(pixel_spacing[1])
+            self.has_spacing = True
+            if not self.spacing_source:
+                self.spacing_source = "user_provided"
+        else:
+            self.dx = None
+            self.dy = None
+            self.has_spacing = False
+            self.spacing_source = "not provided"
 
     def compute_morphometrics(self, binary_mask: np.ndarray, original_gray: np.ndarray = None) -> dict:
-        """
-        Calculates geometric and intensity metrics from 2D binary segmentation mask.
-        binary_mask: 2D numpy array with values in {0, 1} or booleans.
-        original_gray: 2D numpy array [0, 255] for intensity analysis.
+        """Calculates 2D planar dimensions and perpendicular product from binary mask.
+        binary_mask: 2D numpy array [H, W] with values in {0, 1} or booleans.
         """
         mask_bool = binary_mask > 0.5
         pixel_count = int(np.sum(mask_bool))
-        
-        # If no tumor detected (e.g., Healthy brain scan)
+
         if pixel_count == 0:
             return {
                 "tumor_detected": False,
                 "pixel_count": 0,
-                "surface_area_mm2": 0.0,
-                "surface_area_cm2": 0.0,
-                "estimated_volume_mm3": 0.0,
-                "estimated_volume_cm3": 0.0,
-                "equivalent_diameter_mm": 0.0,
-                "major_axis_mm": 0.0,
-                "minor_axis_mm": 0.0,
-                "perimeter_mm": 0.0,
-                "sphericity_index": 0.0,
+                "spacing_source": self.spacing_source,
+                "pixel_spacing_mm": [self.dx, self.dy] if self.has_spacing else None,
+                "area_mm2": 0.0 if self.has_spacing else None,
+                "area_cm2": 0.0 if self.has_spacing else None,
+                "d1_mm": 0.0 if self.has_spacing else None,
+                "d2_mm": 0.0 if self.has_spacing else None,
+                "product_mm2": 0.0 if self.has_spacing else None,
+                "d1_px": 0.0,
+                "d2_px": 0.0,
+                "product_px2": 0.0,
                 "centroid_px": (0, 0),
-                "intensity_stats": {
-                    "mean": 0.0,
-                    "std": 0.0,
-                    "min": 0.0,
-                    "max": 0.0
-                },
-                "clinical_stage_estimate": "T0 (No measurable lesion detected)"
+                "intensity_stats": {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0},
             }
 
-        # 1. Surface Area
-        area_mm2 = pixel_count * self.pixel_area_mm2
-        area_cm2 = area_mm2 / 100.0
-        
-        # 2. Volumetric Estimation (Slice extrusion approximation / standard MRI slice modeling)
-        # For single 2D representative slice, Volume ~ Area * slice_thickness * sphere_correction_factor (4/3 * sqrt(A/pi) / (2/3))
-        # Standard clinical single-slice approximation uses Area * slice_thickness or spherical equivalent
-        volume_mm3 = area_mm2 * self.dz
-        volume_cm3 = volume_mm3 / 1000.0
+        Y, X = np.where(mask_bool)
+        centroid = (float(np.mean(X)), float(np.mean(Y)))
 
-        # 3. Equivalent Circular Diameter
-        equivalent_diameter_mm = 2.0 * math.sqrt(area_mm2 / math.pi)
-
-        # 4. Centroid
-        labeled, num_features = ndimage.label(mask_bool)
-        cy, cx = ndimage.center_of_mass(mask_bool)
-        
-        # 5. Moments & Major/Minor Axes
-        y_indices, x_indices = np.where(mask_bool)
-        x_centered = (x_indices - cx) * self.dx
-        y_centered = (y_indices - cy) * self.dy
-        
-        # Covariance matrix of coordinates
-        coords = np.stack([x_centered, y_centered], axis=0)
-        cov = np.cov(coords)
-        eigenvalues = np.linalg.eigvalsh(cov)
-        eigenvalues = np.maximum(eigenvalues, 1e-6)
-        
-        # 4 * sqrt(eigenvalue) represents 2 standard deviations along principal axes (elliptical approximation)
-        major_axis_mm = 4.0 * math.sqrt(max(eigenvalues))
-        minor_axis_mm = 4.0 * math.sqrt(min(eigenvalues))
-
-        # 6. Perimeter Calculation via morphological boundary
-        eroded = ndimage.binary_erosion(mask_bool)
-        boundary = mask_bool ^ eroded
-        boundary_pixels = np.sum(boundary)
-        perimeter_mm = float(boundary_pixels * ((self.dx + self.dy) / 2.0))
-
-        # 7. Sphericity / Compactness Index (Isoperimetric quotient)
-        # 1.0 for perfect circle, lower for irregular/infiltrative borders
-        if perimeter_mm > 0:
-            sphericity = (4.0 * math.pi * area_mm2) / (perimeter_mm ** 2)
-            sphericity = min(1.0, max(0.0, sphericity))
-        else:
-            sphericity = 0.0
-
-        # 8. Intensity Statistics inside tumor
-        intensity_stats = {}
+        # Intensity statistics on grayscale image if provided
+        intensity_stats = {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
         if original_gray is not None:
-            tumor_pixels = original_gray[mask_bool]
-            if len(tumor_pixels) > 0:
+            vals = original_gray[mask_bool]
+            if len(vals) > 0:
                 intensity_stats = {
-                    "mean": float(np.mean(tumor_pixels)),
-                    "std": float(np.std(tumor_pixels)),
-                    "min": float(np.min(tumor_pixels)),
-                    "max": float(np.max(tumor_pixels))
+                    "mean": float(np.mean(vals)),
+                    "std": float(np.std(vals)),
+                    "min": float(np.min(vals)),
+                    "max": float(np.max(vals)),
                 }
-            else:
-                intensity_stats = {"mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0}
 
-        # Clinical Size Categorization (similar to RECIST lesion grading)
-        if area_cm2 < 1.0:
-            stage_estimate = "Small Focal Lesion (< 1.0 cm²)"
-        elif area_cm2 < 5.0:
-            stage_estimate = "Moderate Sized Mass (1.0 - 5.0 cm²)"
-        elif area_cm2 < 12.0:
-            stage_estimate = "Large Solitary Mass (5.0 - 12.0 cm²)"
+        # PCA for principal diameters (in pixels)
+        pts_px = np.stack([X, Y], axis=1).astype(np.float64)
+        pts_c_px = pts_px - pts_px.mean(axis=0)
+
+        if len(pts_px) > 1:
+            cov = np.cov(pts_c_px, rowvar=False)
+            eigvals, eigvecs = np.linalg.eigh(cov)
+            order = np.argsort(eigvals)[::-1]
+            v1 = eigvecs[:, order[0]]  # Major axis
+            v2 = eigvecs[:, order[1]]  # Perpendicular minor axis
+
+            p1_px = pts_c_px @ v1
+            p2_px = pts_c_px @ v2
+            d1_px = float(p1_px.max() - p1_px.min())
+            d2_px = float(p2_px.max() - p2_px.min())
         else:
-            stage_estimate = "Extensive Diffuse / Giant Mass (> 12.0 cm²)"
+            d1_px = 1.0
+            d2_px = 1.0
+
+        product_px2 = float(d1_px * d2_px)
+
+        # Calibrated metric calculations if spacing is available
+        if self.has_spacing:
+            pts_mm = np.stack([X * self.dx, Y * self.dy], axis=1).astype(np.float64)
+            pts_c_mm = pts_mm - pts_mm.mean(axis=0)
+            cov_mm = np.cov(pts_c_mm, rowvar=False)
+            eigvals_mm, eigvecs_mm = np.linalg.eigh(cov_mm)
+            order_mm = np.argsort(eigvals_mm)[::-1]
+            v1_mm = eigvecs_mm[:, order_mm[0]]
+            v2_mm = eigvecs_mm[:, order_mm[1]]
+
+            p1_mm = pts_c_mm @ v1_mm
+            p2_mm = pts_c_mm @ v2_mm
+            d1_mm = float(p1_mm.max() - p1_mm.min())
+            d2_mm = float(p2_mm.max() - p2_mm.min())
+            area_mm2 = float(pixel_count * self.dx * self.dy)
+            area_cm2 = float(area_mm2 / 100.0)
+            product_mm2 = float(d1_mm * d2_mm)
+        else:
+            d1_mm = None
+            d2_mm = None
+            area_mm2 = None
+            area_cm2 = None
+            product_mm2 = None
 
         return {
             "tumor_detected": True,
             "pixel_count": pixel_count,
-            "surface_area_mm2": round(area_mm2, 2),
-            "surface_area_cm2": round(area_cm2, 3),
-            "estimated_volume_mm3": round(volume_mm3, 2),
-            "estimated_volume_cm3": round(volume_cm3, 3),
-            "equivalent_diameter_mm": round(equivalent_diameter_mm, 2),
-            "major_axis_mm": round(major_axis_mm, 2),
-            "minor_axis_mm": round(minor_axis_mm, 2),
-            "perimeter_mm": round(perimeter_mm, 2),
-            "sphericity_index": round(sphericity, 3),
-            "centroid_px": (round(float(cx), 1), round(float(cy), 1)),
+            "spacing_source": self.spacing_source,
+            "pixel_spacing_mm": [self.dx, self.dy] if self.has_spacing else None,
+            "area_mm2": area_mm2,
+            "area_cm2": area_cm2,
+            "d1_mm": d1_mm,
+            "d2_mm": d2_mm,
+            "product_mm2": product_mm2,
+            "d1_px": d1_px,
+            "d2_px": d2_px,
+            "product_px2": product_px2,
+            "centroid_px": centroid,
             "intensity_stats": intensity_stats,
-            "clinical_stage_estimate": stage_estimate
         }

@@ -1,120 +1,153 @@
+"""Longitudinal Assessment & Temporal Follow-up Analysis Engine.
+Calculates 2D RANO-inspired perpendicular product change between baseline (P0) and follow-up (P1):
+  %ΔP = (P1 - P0) / P0 * 100
+
+Response Criteria:
+- Complete Response (CR): Follow-up mask is empty (0 pixels) while baseline was non-empty.
+- Partial Response (PR): %ΔP <= -50% (at least 50% reduction in perpendicular product).
+- Progressive Disease (PD): %ΔP >= +25% (at least 25% enlargement in perpendicular product).
+- Stable Disease (SD): Neither PR nor PD criteria met (-50% < %ΔP < +25%).
+
+Output provides neutral imaging notes without clinical diagnosis claims.
+Includes chromatic spatial difference maps (Green = Regression, Red = Progression, Yellow = Stable).
+"""
+from typing import Dict, Tuple, Optional
 import numpy as np
-from PIL import Image
-from app.config import RANO_CRITERIA
+import cv2
+
 
 class LongitudinalAnalyzer:
-    """
-    Longitudinal Patient Monitoring and Treatment-Response Assessment Engine.
-    Evaluates successive MRI scans (Baseline vs. Follow-up), tracks volumetric
-    trajectories, and assigns standardized clinical response categories (RANO/RECIST).
-    """
 
     @staticmethod
     def compare_timepoints(baseline_metrics: dict, followup_metrics: dict, days_between: int = 90) -> dict:
-        """
-        Compares quantitative metrics between baseline and follow-up examinations.
-        """
-        v_base = baseline_metrics.get("estimated_volume_cm3", 0.0)
-        v_follow = followup_metrics.get("estimated_volume_cm3", 0.0)
-        a_base = baseline_metrics.get("surface_area_cm2", 0.0)
-        a_follow = followup_metrics.get("surface_area_cm2", 0.0)
-        
-        delta_v = v_follow - v_base
-        delta_a = a_follow - a_base
-
-        if v_base > 0:
-            pct_change_v = (delta_v / v_base) * 100.0
-            pct_change_a = (delta_a / a_base) * 100.0
+        """Compares baseline and follow-up measurements via RANO-inspired 2D product criteria."""
+        # Use physical product (product_mm2) if available, otherwise pixel product (product_px2)
+        use_mm = (
+            baseline_metrics.get("product_mm2") is not None
+            and followup_metrics.get("product_mm2") is not None
+        )
+        if use_mm:
+            p0 = float(baseline_metrics["product_mm2"])
+            p1 = float(followup_metrics["product_mm2"])
+            units = "mm²"
         else:
-            if v_follow > 0:
-                pct_change_v = 100.0
-                pct_change_a = 100.0
-            else:
-                pct_change_v = 0.0
-                pct_change_a = 0.0
+            p0 = float(baseline_metrics.get("product_px2", 0.0))
+            p1 = float(followup_metrics.get("product_px2", 0.0))
+            units = "px²"
 
-        # Monthly growth/shrinkage velocity (cm³ per 30 days)
-        if days_between > 0:
-            growth_velocity_cm3_per_month = (delta_v / days_between) * 30.0
-        else:
-            growth_velocity_cm3_per_month = 0.0
+        n0 = int(baseline_metrics.get("pixel_count", 0))
+        n1 = int(followup_metrics.get("pixel_count", 0))
 
-        # RANO Response Criteria Assessment
-        if v_base > 0 and v_follow == 0:
-            response_code = "COMPLETE_RESPONSE"
+        delta_p = p1 - p0
+
+        # Response classification
+        if n0 > 0 and n1 == 0:
+            category = "CR"
             response_name = "Complete Response (CR)"
-            response_summary = "Complete disappearance of the enhancing tumor lesion."
+            pct_change_p = -100.0
             trend = "Resolution"
             color_theme = "emerald"
-        elif pct_change_v <= -50.0:
-            response_code = "PARTIAL_RESPONSE"
-            response_name = "Partial Response (PR)"
-            response_summary = f"Significant tumor regression ({abs(pct_change_v):.1f}% volume reduction). Favorable response to current therapeutic regimen."
-            trend = "Regression"
-            color_theme = "blue"
-        elif pct_change_v >= 25.0:
-            response_code = "PROGRESSIVE_DISEASE"
-            response_name = "Progressive Disease (PD)"
-            response_summary = f"Significant tumor progression (+{pct_change_v:.1f}% volume increase). Indicates treatment refractoriness or disease recurrence."
-            trend = "Progression"
-            color_theme = "red"
+            summary = "Complete disappearance of measurable lesion on follow-up imaging."
+        elif p0 > 0:
+            pct_change_p = float((delta_p / p0) * 100.0)
+            if pct_change_p <= -50.0:
+                category = "PR"
+                response_name = "Partial Response (PR)"
+                trend = "Regression"
+                color_theme = "blue"
+                summary = f"Significant lesion regression ({abs(pct_change_p):.1f}% reduction in perpendicular product)."
+            elif pct_change_p >= 25.0:
+                category = "PD"
+                response_name = "Progressive Disease (PD)"
+                trend = "Progression"
+                color_theme = "red"
+                summary = f"Lesion progression (+{pct_change_p:.1f}% increase in perpendicular product)."
+            else:
+                category = "SD"
+                response_name = "Stable Disease (SD)"
+                trend = "Stable"
+                color_theme = "amber"
+                summary = f"Lesion dimension remains stable ({pct_change_p:+.1f}% perpendicular product change)."
         else:
-            response_code = "STABLE_DISEASE"
-            response_name = "Stable Disease (SD)"
-            response_summary = f"Tumor remains morphologically stable ({pct_change_v:+.1f}% volume variation within acceptable margins)."
-            trend = "Stable"
-            color_theme = "amber"
+            if p1 > 0:
+                category = "PD"
+                response_name = "Progressive Disease (PD)"
+                pct_change_p = 100.0
+                trend = "Progression"
+                color_theme = "red"
+                summary = "New measurable lesion detected on follow-up examination."
+            else:
+                category = "CR"
+                response_name = "Complete Response (CR)"
+                pct_change_p = 0.0
+                trend = "Stable"
+                color_theme = "emerald"
+                summary = "No measurable lesion present at either examination."
 
         return {
             "days_between": days_between,
-            "baseline": {
-                "volume_cm3": round(v_base, 3),
-                "area_cm2": round(a_base, 3),
-                "diameter_mm": baseline_metrics.get("equivalent_diameter_mm", 0.0),
-                "detected": baseline_metrics.get("tumor_detected", False)
-            },
-            "followup": {
-                "volume_cm3": round(v_follow, 3),
-                "area_cm2": round(a_follow, 3),
-                "diameter_mm": followup_metrics.get("equivalent_diameter_mm", 0.0),
-                "detected": followup_metrics.get("tumor_detected", False)
-            },
-            "delta_volume_cm3": round(delta_v, 3),
-            "percent_change_volume": round(pct_change_v, 1),
-            "delta_area_cm2": round(delta_a, 3),
-            "percent_change_area": round(pct_change_a, 1),
-            "growth_velocity_cm3_per_month": round(growth_velocity_cm3_per_month, 3),
-            "response_category": response_name,
-            "response_code": response_code,
-            "response_summary": response_summary,
-            "criteria_definition": RANO_CRITERIA.get(response_code, ""),
+            "category": category,
+            "response_category": category,
+            "response_name": response_name,
+            "percent_change_product": pct_change_p,
+            "pct_change_product": pct_change_p,
+            "delta_product": delta_p,
+            "product_units": units,
+            "baseline_product": p0,
+            "followup_product": p1,
             "trend": trend,
-            "color_theme": color_theme
+            "color_theme": color_theme,
+            "summary": summary,
+            "framework": "RANO-inspired imaging response",
+            "neutral_note": "Imaging change only; clinical RANO also considers steroid dose and neurological status.",
+            "note": "Imaging change only; clinical RANO also considers steroid dose and neurological status.",
+            "disclaimer": "Academic decision-support prototype — not for clinical diagnosis.",
         }
 
     @staticmethod
-    def generate_longitudinal_delta_map(base_mask: np.ndarray, follow_mask: np.ndarray) -> Image.Image:
+    def generate_difference_map(
+        baseline_gray: np.ndarray,
+        baseline_mask: np.ndarray,
+        followup_mask: np.ndarray,
+    ) -> np.ndarray:
+        """Generates chromatic subtraction / spatial difference map:
+        - Green (0, 230, 115): Tumor regression / shrinkage (in baseline but not followup)
+        - Red (234, 67, 53): Tumor progression / growth (in followup but not baseline)
+        - Yellow (251, 188, 4): Stable tumor area (in both baseline and followup)
         """
-        Creates an intuitive color-coded spatial difference map:
-        - Green: Regressed / Shrunk tumor region (present at baseline, cleared at follow-up)
-        - Red: Progressive / New tumor growth region (absent at baseline, newly present at follow-up)
-        - Yellow: Persistent tumor core (present at both baseline and follow-up)
-        """
-        b = base_mask > 0.5
-        f = follow_mask > 0.5
-        
-        h, w = b.shape
-        rgba = np.zeros((h, w, 4), dtype=np.uint8)
-        
-        persistent = b & f
-        regressed = b & (~f)
-        progressed = (~b) & f
-        
-        # Yellow for persistent core (RGBA: 250, 204, 21, 190)
-        rgba[persistent] = [250, 204, 21, 200]
-        # Green for regressed tissue (RGBA: 34, 197, 94, 200)
-        rgba[regressed] = [34, 197, 94, 200]
-        # Red for progressed/growth tissue (RGBA: 239, 68, 68, 200)
-        rgba[progressed] = [239, 68, 68, 200]
-        
-        return Image.fromarray(rgba, mode="RGBA")
+        b_mask = baseline_mask > 0.5
+        f_mask = followup_mask > 0.5
+
+        if baseline_gray.ndim == 2:
+            base_rgb = cv2.cvtColor(baseline_gray, cv2.COLOR_GRAY2RGB)
+        else:
+            base_rgb = baseline_gray.copy()
+
+        diff_vis = base_rgb.copy()
+
+        # Stable region: yellow (251, 188, 4)
+        stable = b_mask & f_mask
+        diff_vis[stable] = [251, 188, 4]
+
+        # Regressed region: green (0, 230, 115)
+        regressed = b_mask & ~f_mask
+        diff_vis[regressed] = [0, 230, 115]
+
+        # Progressed region: red (234, 67, 53)
+        progressed = ~b_mask & f_mask
+        diff_vis[progressed] = [234, 67, 53]
+
+        # Blend with base image
+        result = cv2.addWeighted(base_rgb, 0.45, diff_vis, 0.55, 0)
+        return result
+
+    @classmethod
+    def generate_longitudinal_delta_map(cls, baseline_mask: np.ndarray, followup_mask: np.ndarray, baseline_gray: np.ndarray = None):
+        """Generates difference map as PIL Image."""
+        from PIL import Image
+        h, w = baseline_mask.shape[:2]
+        if baseline_gray is None:
+            baseline_gray = np.zeros((h, w), dtype=np.uint8)
+        diff_rgb = cls.generate_difference_map(baseline_gray, baseline_mask, followup_mask)
+        return Image.fromarray(diff_rgb)
+
