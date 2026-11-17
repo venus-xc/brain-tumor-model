@@ -1,4 +1,4 @@
-// Clinical AI PACS Workstation Controller (IEEE Reference Standard)
+// Clinical AI PACS Workstation Controller - Clean Light Theme
 
 let currentInferenceData = null;
 let currentViewMode = 'segmentation'; // 'original' | 'segmentation' | 'gradcam' | 'gradcam_pp' | 'attention_gate' | 'mask_only'
@@ -18,13 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // Tab Navigation
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'text-white'));
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   
   const targetTab = document.getElementById(`tab-${tabId}`);
   const targetBtn = document.getElementById(`tab-btn-${tabId}`);
   
   if (targetTab) targetTab.classList.remove('hidden');
-  if (targetBtn) targetBtn.classList.add('active', 'text-white');
+  if (targetBtn) targetBtn.classList.add('active');
   
   lucide.createIcons();
 
@@ -50,9 +50,9 @@ function setViewMode(mode) {
     const btn = document.getElementById(id);
     if (btn) {
       if (m === mode) {
-        btn.className = 'px-2.5 py-1 rounded font-medium bg-brand-600 text-white transition';
+        btn.className = 'px-2.5 py-1 rounded text-xs font-semibold bg-blue-600 text-white shadow-sm transition';
       } else {
-        btn.className = 'px-2.5 py-1 rounded font-medium text-slate-300 hover:text-white transition';
+        btn.className = 'px-2.5 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition';
       }
     }
   });
@@ -75,13 +75,13 @@ function updateViewerDisplay() {
     if (hudEl) hudEl.textContent = currentSegArch === 'attention_unet' ? 'Attention U-Net Overlay' : 'Standard U-Net Overlay';
   } else if (currentViewMode === 'gradcam') {
     imgEl.src = vis.gradcam_base64;
-    if (hudEl) hudEl.textContent = 'Grad-CAM Saliency (ICCV)';
+    if (hudEl) hudEl.textContent = 'Grad-CAM Saliency';
   } else if (currentViewMode === 'gradcam_pp') {
     imgEl.src = vis.gradcam_pp_base64;
-    if (hudEl) hudEl.textContent = 'Grad-CAM++ Higher-Order (IEEE TIP)';
+    if (hudEl) hudEl.textContent = 'Grad-CAM++ Higher-Order';
   } else if (currentViewMode === 'attention_gate') {
     imgEl.src = vis.attention_gate_base64;
-    if (hudEl) hudEl.textContent = 'Skip Attention Gate Focus (IEEE TMI)';
+    if (hudEl) hudEl.textContent = 'Skip Attention Gate Focus';
   } else if (currentViewMode === 'mask_only') {
     imgEl.src = vis.mask_base64;
     if (hudEl) hudEl.textContent = 'Binary Predicted Mask';
@@ -168,30 +168,31 @@ function renderDiagnosticResults(data) {
 
   if (badgeEl) {
     if (pred.is_tumor_detected) {
-      badgeEl.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-500/10 text-red-400 border border-red-500/20';
+      badgeEl.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-50 text-red-700 border border-red-200';
       badgeEl.textContent = 'LESION DETECTED';
     } else {
-      badgeEl.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+      badgeEl.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
       badgeEl.textContent = 'NORMAL / NO LESION';
     }
   }
 
-  // Softmax Probabilities Bars
+  // Softmax Probabilities Bars (Clean Light Style)
   const probsContainer = document.getElementById('classProbabilities');
   if (probsContainer && pred.distribution) {
     probsContainer.innerHTML = '';
     Object.entries(pred.distribution).forEach(([cls, prob]) => {
       const isSelected = (cls === pred.label);
-      const barColor = isSelected ? 'bg-brand-500' : 'bg-slate-700';
+      const barColor = isSelected ? 'bg-blue-600' : 'bg-slate-300';
+      const textColor = isSelected ? 'text-slate-900 font-semibold' : 'text-slate-600';
       const row = document.createElement('div');
       row.className = 'space-y-1';
       row.innerHTML = `
-        <div class="flex justify-between text-[11px] ${isSelected ? 'text-white font-semibold' : 'text-slate-400'}">
+        <div class="flex justify-between text-xs ${textColor}">
           <span>${cls}</span>
-          <span class="font-mono">${prob.toFixed(1)}%</span>
+          <span class="font-mono font-medium">${prob.toFixed(1)}%</span>
         </div>
-        <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
-          <div class="${barColor} h-1.5 rounded-full transition-all duration-500" style="width: ${prob}%"></div>
+        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+          <div class="${barColor} h-2 rounded-full transition-all duration-300" style="width: ${prob}%"></div>
         </div>
       `;
       probsContainer.appendChild(row);
@@ -268,17 +269,17 @@ async function runLongitudinalAnalysis() {
       document.getElementById('longDeltaImg').src = data.delta_map_base64;
     }
 
-    // Verdict box
+    // Verdict box (Clean Light Styling)
     document.getElementById('longVerdictTitle').textContent = `RANO Assessment: ${c.response_category}`;
     document.getElementById('longVerdictText').textContent = c.response_summary;
 
     const box = document.getElementById('longitudinalVerdictBox');
     if (c.trend === 'Regression') {
-      box.className = 'p-4 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-start space-x-3';
+      box.className = 'p-4 rounded-lg bg-blue-50 border border-blue-200 flex items-start space-x-3';
     } else if (c.trend === 'Progression') {
-      box.className = 'p-4 rounded-xl bg-red-950/40 border border-red-500/30 flex items-start space-x-3';
+      box.className = 'p-4 rounded-lg bg-red-50 border border-red-200 flex items-start space-x-3';
     } else {
-      box.className = 'p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-start space-x-3';
+      box.className = 'p-4 rounded-lg bg-emerald-50 border border-emerald-200 flex items-start space-x-3';
     }
 
     lucide.createIcons();
