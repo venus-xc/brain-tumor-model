@@ -62,3 +62,26 @@ def test_report_generation(client):
     assert dl_res.status_code == 200
     assert dl_res.headers["content-type"] == "application/pdf"
     assert len(dl_res.content) > 1000  # Non-trivial PDF size
+
+def test_ieee_metrics_api(client):
+    res = client.get("/api/ieee/metrics")
+    assert res.status_code == 200
+    data = res.json()
+    assert "overall_accuracy" in data
+    assert "literature_baselines" in data
+
+def test_ieee_paper_download(client):
+    res = client.get("/api/ieee/paper/download")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/pdf"
+    assert len(res.content) > 1000
+
+def test_ieee_latex_download(client):
+    res = client.get("/api/ieee/latex/download")
+    assert res.status_code == 200
+    assert "documentclass" in res.text
+
+def test_ieee_report_download(client):
+    res = client.get("/api/ieee/report/download")
+    assert res.status_code == 200
+    assert "SEMINAR AND MAJOR PROJECT REPORT" in res.text

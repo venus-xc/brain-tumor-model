@@ -1,7 +1,8 @@
-// Clinical AI PACS Workstation Controller
+// Clinical AI PACS Workstation Controller (IEEE Reference Standard)
 
 let currentInferenceData = null;
-let currentViewMode = 'segmentation'; // 'original' | 'segmentation' | 'gradcam' | 'mask_only'
+let currentViewMode = 'segmentation'; // 'original' | 'segmentation' | 'gradcam' | 'gradcam_pp' | 'attention_gate' | 'mask_only'
+let currentSegArch = 'attention_unet'; // 'attention_unet' | 'standard_unet'
 let currentGradcamAlpha = 0.45;
 let currentMaskThresh = 0.50;
 let currentSampleKey = 'glioma';
@@ -32,7 +33,7 @@ function switchTab(tabId) {
   }
 }
 
-// Layer Mode Switching (MRI, U-Net Mask, Grad-CAM, Binary Mask)
+// Layer Mode Switching (MRI, Attention U-Net, Grad-CAM, Grad-CAM++, Attention Gate, Binary Mask)
 function setViewMode(mode) {
   currentViewMode = mode;
   
@@ -40,6 +41,8 @@ function setViewMode(mode) {
     'original': 'btn-mode-orig',
     'segmentation': 'btn-mode-seg',
     'gradcam': 'btn-mode-cam',
+    'gradcam_pp': 'btn-mode-cam-pp',
+    'attention_gate': 'btn-mode-ag',
     'mask_only': 'btn-mode-mask'
   };
 
@@ -61,16 +64,27 @@ function setViewMode(mode) {
 function updateViewerDisplay() {
   if (!currentInferenceData || !currentInferenceData.visualizations) return;
   const imgEl = document.getElementById('viewerImage');
+  const hudEl = document.getElementById('hudCoordinates');
   const vis = currentInferenceData.visualizations;
 
   if (currentViewMode === 'original') {
     imgEl.src = vis.original_base64;
+    if (hudEl) hudEl.textContent = 'Axial T1-CE Original MRI';
   } else if (currentViewMode === 'segmentation') {
     imgEl.src = vis.segmentation_overlay_base64;
+    if (hudEl) hudEl.textContent = currentSegArch === 'attention_unet' ? 'Attention U-Net Overlay' : 'Standard U-Net Overlay';
   } else if (currentViewMode === 'gradcam') {
     imgEl.src = vis.gradcam_base64;
+    if (hudEl) hudEl.textContent = 'Grad-CAM Saliency (ICCV)';
+  } else if (currentViewMode === 'gradcam_pp') {
+    imgEl.src = vis.gradcam_pp_base64;
+    if (hudEl) hudEl.textContent = 'Grad-CAM++ Higher-Order (IEEE TIP)';
+  } else if (currentViewMode === 'attention_gate') {
+    imgEl.src = vis.attention_gate_base64;
+    if (hudEl) hudEl.textContent = 'Skip Attention Gate Focus (IEEE TMI)';
   } else if (currentViewMode === 'mask_only') {
     imgEl.src = vis.mask_base64;
+    if (hudEl) hudEl.textContent = 'Binary Predicted Mask';
   }
 }
 
@@ -83,6 +97,7 @@ async function loadSample(sampleKey) {
   formData.append('sample_key', sampleKey);
   formData.append('gradcam_alpha', currentGradcamAlpha);
   formData.append('mask_threshold', currentMaskThresh);
+  formData.append('seg_architecture', currentSegArch);
 
   await executeInference(formData);
 }
@@ -99,8 +114,15 @@ async function handleFileUpload(event) {
   formData.append('file', file);
   formData.append('gradcam_alpha', currentGradcamAlpha);
   formData.append('mask_threshold', currentMaskThresh);
+  formData.append('seg_architecture', currentSegArch);
 
   await executeInference(formData);
+}
+
+// Architecture switcher (Attention U-Net vs Standard U-Net)
+function changeSegArchitecture(arch) {
+  currentSegArch = arch;
+  reRunInferenceWithParams();
 }
 
 // Execute Inference API call
@@ -211,6 +233,7 @@ function reRunInferenceWithParams() {
     }
     formData.append('gradcam_alpha', currentGradcamAlpha);
     formData.append('mask_threshold', currentMaskThresh);
+    formData.append('seg_architecture', currentSegArch);
     await executeInference(formData);
   }, 120);
 }
@@ -255,7 +278,7 @@ async function runLongitudinalAnalysis() {
     } else if (c.trend === 'Progression') {
       box.className = 'p-4 rounded-xl bg-red-950/40 border border-red-500/30 flex items-start space-x-3';
     } else {
-      box.className = 'p-4 rounded-xl bg-amber-950/40 border border-amber-500/30 flex items-start space-x-3';
+      box.className = 'p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-start space-x-3';
     }
 
     lucide.createIcons();

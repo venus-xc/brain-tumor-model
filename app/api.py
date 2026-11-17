@@ -16,6 +16,8 @@ from app.models.pipeline import BrainTumorInferencePipeline
 from app.services.sample_generator import BenchmarkSampleGenerator
 from app.services.longitudinal import LongitudinalAnalyzer
 from app.services.report_generator import ClinicalReportGenerator
+from app.services.ieee_metrics import IEEEMetricsEngine
+from app.services.ieee_paper_generator import IEEEPaperGenerator
 
 # Global Pipeline Instance
 pipeline = None
@@ -89,7 +91,8 @@ async def run_prediction(
     file: UploadFile = None,
     sample_key: str = Form(None),
     gradcam_alpha: float = Form(0.45),
-    mask_threshold: float = Form(0.5)
+    mask_threshold: float = Form(0.5),
+    seg_architecture: str = Form("attention_unet")
 ):
     global pipeline
     if pipeline is None:
@@ -121,7 +124,8 @@ async def run_prediction(
         results = pipeline.run_full_inference(
             image_source,
             gradcam_alpha=gradcam_alpha,
-            mask_threshold=mask_threshold
+            mask_threshold=mask_threshold,
+            seg_architecture=seg_architecture
         )
         return results
     except Exception as e:
@@ -261,4 +265,50 @@ async def download_report_file(filename: str):
         path=str(file_path),
         filename=filename,
         media_type="application/pdf"
+    )
+
+# ==================== IEEE RESEARCH & BENCHMARK ENDPOINTS ====================
+
+@app.get("/api/ieee/metrics")
+async def get_ieee_metrics():
+    """Returns comprehensive IEEE benchmark metrics, confusion matrix, ROC curves, and SOTA comparison."""
+    metrics = IEEEMetricsEngine.compute_comprehensive_metrics()
+    metrics["literature_baselines"] = IEEEMetricsEngine.get_benchmark_comparison()
+    return metrics
+
+@app.get("/api/ieee/paper/download")
+@app.head("/api/ieee/paper/download")
+async def download_ieee_paper():
+    """Generates and serves the official 2-Column IEEE Conference Paper PDF."""
+    pdf_path = IEEEPaperGenerator.generate_ieee_paper_pdf()
+    return FileResponse(
+        path=pdf_path,
+        filename="IEEE_Conference_Paper_Brain_Tumor.pdf",
+        media_type="application/pdf"
+    )
+
+@app.get("/api/ieee/latex/download")
+@app.head("/api/ieee/latex/download")
+async def download_ieee_latex():
+    """Serves the complete LaTeX manuscript source code."""
+    tex_path = Path(__file__).resolve().parent.parent / "paper" / "IEEE_Brain_Tumor_Research_Paper.tex"
+    if not tex_path.exists():
+        raise HTTPException(status_code=404, detail="LaTeX manuscript not found.")
+    return FileResponse(
+        path=str(tex_path),
+        filename="IEEE_Brain_Tumor_Research_Paper.tex",
+        media_type="text/x-tex"
+    )
+
+@app.get("/api/ieee/report/download")
+@app.head("/api/ieee/report/download")
+async def download_ieee_report():
+    """Serves the complete University Seminar & Major Project Thesis Report."""
+    md_path = Path(__file__).resolve().parent.parent / "paper" / "IEEE_Seminar_Project_Report.md"
+    if not md_path.exists():
+        raise HTTPException(status_code=404, detail="Project report not found.")
+    return FileResponse(
+        path=str(md_path),
+        filename="IEEE_Seminar_Project_Report.md",
+        media_type="text/markdown"
     )
