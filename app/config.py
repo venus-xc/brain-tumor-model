@@ -3,6 +3,7 @@ from pathlib import Path
 
 # Base Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR
 APP_DIR = BASE_DIR / "app"
 STATIC_DIR = APP_DIR / "static"
 SAMPLES_DIR = STATIC_DIR / "samples"
@@ -46,6 +47,7 @@ CLASSIFIER_SIZES = {
     "effb0": 160,
 }
 SEGMENTATION_SIZE = (256, 256)
+IMAGE_SIZE = (224, 224)
 
 NORM_MEAN = [0.485, 0.456, 0.406]
 NORM_STD = [0.229, 0.224, 0.225]

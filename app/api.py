@@ -1,49 +1,135 @@
+"""FastAPI Application Server for Brain Tumor Academic Prototype.
+Provides REST API endpoints for:
+- 4-class Classification: HOG+SVM, Custom CNN, SE-CNN, EfficientNet-B0
+- Lesion Segmentation: Biomedical U-Net, Attention U-Net
+- Dual XAI: Grad-CAM and Grad-CAM++
+- Quantitative 2D morphometrics (area, d1, d2, product)
+- RANO longitudinal response assessment
+- Academic PDF report generation
+- Real evaluated metrics from results/
+"""
+import json
 import os
 import shutil
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Optional
+
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import (
-    STATIC_DIR, SAMPLES_DIR, REPORTS_DIR, UPLOADS_DIR,
-    CLASS_NAMES, CLASS_DESCRIPTIONS, RANO_CRITERIA
+    STATIC_DIR,
+    SAMPLES_DIR,
+    REPORTS_DIR,
+    UPLOADS_DIR,
+    PROJECT_ROOT,
+    CLASS_NAMES,
+    CLASS_DESCRIPTIONS,
+    ACADEMIC_DISCLAIMER,
 )
-from app.models.pipeline import BrainTumorInferencePipeline
-from app.services.sample_generator import BenchmarkSampleGenerator
+from app.models.pipeline import (
+    BrainTumorInferencePipeline,
+    MODEL_DISPLAY_NAMES,
+    SEG_DISPLAY_NAMES,
+)
 from app.services.longitudinal import LongitudinalAnalyzer
 from app.services.report_generator import ClinicalReportGenerator
-from app.services.ieee_metrics import IEEEMetricsEngine
-from app.services.ieee_paper_generator import IEEEPaperGenerator
+from app.services.preprocessor import MedicalImagePreprocessor
 
-# Global Pipeline Instance
-pipeline = None
+pipeline: Optional[BrainTumorInferencePipeline] = None
+
+# Verified Real MRI Benchmark Samples (8 classification, 2 segmentation, 1 longitudinal pair)
+REAL_SAMPLES_CATALOG = {
+    "normal": {
+        "key": "normal",
+        "label": "No tumor",
+        "class_idx": 0,
+        "description": "Axial T1 MRI - Normal brain parenchyma without focal lesion (Sartaj test split)",
+        "image_url": "/static/samples/sample_normal.png",
+        "mask_url": "/static/samples/sample_normal_mask.png",
+        "image_path": str(SAMPLES_DIR / "sample_normal.png"),
+    },
+    "glioma": {
+        "key": "glioma",
+        "label": "Glioma",
+        "class_idx": 1,
+        "description": "Axial T1-CE MRI - Infiltrative intra-axial glioma lesion (Sartaj test split)",
+        "image_url": "/static/samples/sample_glioma.png",
+        "mask_url": "/static/samples/sample_glioma_mask.png",
+        "image_path": str(SAMPLES_DIR / "sample_glioma.png"),
+    },
+    "meningioma": {
+        "key": "meningioma",
+        "label": "Meningioma",
+        "class_idx": 2,
+        "description": "Axial T1-CE MRI - Dural-based extra-axial meningioma (Sartaj test split)",
+        "image_url": "/static/samples/sample_meningioma.png",
+        "mask_url": "/static/samples/sample_meningioma_mask.png",
+        "image_path": str(SAMPLES_DIR / "sample_meningioma.png"),
+    },
+    "pituitary": {
+        "key": "pituitary",
+        "label": "Pituitary",
+        "class_idx": 3,
+        "description": "Coronal/Axial MRI - Sellar/parasellar pituitary adenoma (Sartaj test split)",
+        "image_url": "/static/samples/sample_pituitary.png",
+        "mask_url": "/static/samples/sample_pituitary_mask.png",
+        "image_path": str(SAMPLES_DIR / "sample_pituitary.png"),
+    },
+    "figshare_1": {
+        "key": "figshare_1",
+        "label": "Meningioma",
+        "class_idx": 2,
+        "description": "Patient test slice with ground truth boundary (Figshare test patient #3381)",
+        "image_url": "/static/samples/figshare_test_1.png",
+        "mask_url": "/static/samples/figshare_test_1_mask.png",
+        "image_path": str(SAMPLES_DIR / "figshare_test_1.png"),
+    },
+    "figshare_2": {
+        "key": "figshare_2",
+        "label": "Glioma",
+        "class_idx": 1,
+        "description": "Patient test slice with ground truth boundary (Figshare test patient #3394)",
+        "image_url": "/static/samples/figshare_test_2.png",
+        "mask_url": "/static/samples/figshare_test_2_mask.png",
+        "image_path": str(SAMPLES_DIR / "figshare_test_2.png"),
+    },
+    "longitudinal_pair": {
+        "key": "longitudinal_pair",
+        "description": "Paired baseline and follow-up examinations for RANO response monitoring",
+        "baseline_url": "/static/samples/longitudinal_baseline.png",
+        "followup_url": "/static/samples/longitudinal_followup.png",
+        "baseline_path": str(SAMPLES_DIR / "longitudinal_baseline.png"),
+        "followup_path": str(SAMPLES_DIR / "longitudinal_followup.png"),
+    },
+}
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global pipeline
-    print("Initializing Multi-Task Deep Learning Pipeline & Benchmark Dataset...")
-    BenchmarkSampleGenerator.generate_all_samples()
+    print("Initializing Multi-Task Deep Learning Pipeline...")
     pipeline = BrainTumorInferencePipeline()
     print("Brain Tumor AI System is ready!")
     yield
 
+
 app = FastAPI(
-    title="Brain Tumor AI Diagnostic & Monitoring Workstation",
-    description="Multi-task AI system for Brain Tumor Detection, U-Net Segmentation, Grad-CAM XAI & Longitudinal Monitoring",
-    version="1.0.0",
-    lifespan=lifespan
+    title="Brain Tumor Academic Decision-Support System",
+    description="Multi-task AI system for Brain Tumor Detection, U-Net Segmentation, Grad-CAM XAI & Longitudinal Monitoring (Academic Prototype)",
+    version="2.0.0",
+    lifespan=lifespan,
 )
 
-# Mount static directory
+# Static and Templates
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-# Templates
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
 
 @app.get("/", response_class=HTMLResponse)
 @app.head("/", response_class=HTMLResponse)
@@ -53,58 +139,52 @@ async def index_view(request: Request):
         name="index.html",
         context={
             "classes": CLASS_NAMES,
-            "descriptions": CLASS_DESCRIPTIONS
-        }
+            "descriptions": CLASS_DESCRIPTIONS,
+            "models": MODEL_DISPLAY_NAMES,
+            "seg_models": SEG_DISPLAY_NAMES,
+            "disclaimer": ACADEMIC_DISCLAIMER,
+        },
     )
+
 
 @app.get("/api/health")
 async def health_check():
+    loaded_status = pipeline.get_loaded_models() if pipeline else {}
     return {
         "status": "healthy",
-        "models_loaded": pipeline is not None,
+        "models_loaded": loaded_status,
         "device": str(pipeline.device) if pipeline else "uninitialized",
-        "supported_classes": CLASS_NAMES
+        "supported_classes": CLASS_NAMES,
+        "disclaimer": ACADEMIC_DISCLAIMER,
     }
+
 
 @app.get("/api/samples")
 async def get_sample_scans():
-    samples = BenchmarkSampleGenerator.generate_all_samples()
-    # Format for frontend
-    clean_samples = {}
-    for k, v in samples.items():
-        if k == "longitudinal_pair":
-            clean_samples[k] = {
-                "key": k,
-                "description": v["description"],
-                "baseline_url": f"/static/samples/{Path(v['baseline_path']).name}",
-                "followup_url": f"/static/samples/{Path(v['followup_path']).name}"
-            }
-        else:
-            clean_samples[k] = {
-                "key": k,
-                "label": v["label"],
-                "class_idx": v["class_idx"],
-                "description": v["description"],
-                "image_url": f"/static/samples/{Path(v['image_path']).name}",
-                "mask_url": f"/static/samples/{Path(v['mask_path']).name}"
-            }
-    return clean_samples
+    return REAL_SAMPLES_CATALOG
+
 
 @app.post("/api/predict")
 async def run_prediction(
     file: UploadFile = None,
     sample_key: str = Form(None),
-    gradcam_alpha: float = Form(0.45),
+    classifier: str = Form("effb0"),
+    seg_architecture: str = Form("attunet"),
     mask_threshold: float = Form(0.5),
-    seg_architecture: str = Form("attention_unet")
+    gradcam_alpha: float = Form(0.45),
+    pixel_spacing_mm: Optional[float] = Form(None),
 ):
     global pipeline
     if pipeline is None:
         raise HTTPException(status_code=503, detail="Inference pipeline not initialized.")
 
     image_source = None
+    spacing_source = None
+    if pixel_spacing_mm is not None and pixel_spacing_mm > 0:
+        spacing_source = f"user_provided ({pixel_spacing_mm:.4f} mm)"
+
     if file and file.filename:
-        # Save temporary upload
+        UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
         ext = Path(file.filename).suffix or ".png"
         temp_name = f"upload_{uuid.uuid4().hex[:8]}{ext}"
         temp_path = UPLOADS_DIR / temp_name
@@ -112,13 +192,12 @@ async def run_prediction(
             shutil.copyfileobj(file.file, buffer)
         image_source = str(temp_path)
     elif sample_key:
-        samples = BenchmarkSampleGenerator.generate_all_samples()
-        if sample_key in samples:
-            image_source = samples[sample_key]["image_path"]
+        if sample_key in REAL_SAMPLES_CATALOG:
+            image_source = REAL_SAMPLES_CATALOG[sample_key].get("image_path")
         elif sample_key == "baseline":
-            image_source = samples["longitudinal_pair"]["baseline_path"]
+            image_source = REAL_SAMPLES_CATALOG["longitudinal_pair"]["baseline_path"]
         elif sample_key == "followup":
-            image_source = samples["longitudinal_pair"]["followup_path"]
+            image_source = REAL_SAMPLES_CATALOG["longitudinal_pair"]["followup_path"]
         else:
             raise HTTPException(status_code=400, detail=f"Sample key '{sample_key}' not found.")
     else:
@@ -127,13 +206,19 @@ async def run_prediction(
     try:
         results = pipeline.run_full_inference(
             image_source,
-            gradcam_alpha=gradcam_alpha,
+            classifier=classifier,
+            seg_architecture=seg_architecture,
             mask_threshold=mask_threshold,
-            seg_architecture=seg_architecture
+            gradcam_alpha=gradcam_alpha,
+            pixel_spacing_mm=pixel_spacing_mm,
+            spacing_source=spacing_source,
         )
         return results
+    except FileNotFoundError as fnf:
+        raise HTTPException(status_code=503, detail=str(fnf))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
+
 
 @app.post("/api/longitudinal")
 async def run_longitudinal_assessment(
@@ -141,29 +226,29 @@ async def run_longitudinal_assessment(
     baseline_sample: str = Form(None),
     followup_file: UploadFile = None,
     followup_sample: str = Form(None),
-    days_between: int = Form(90)
+    classifier: str = Form("effb0"),
+    seg_architecture: str = Form("attunet"),
+    pixel_spacing_mm: Optional[float] = Form(None),
+    days_between: int = Form(90),
 ):
     global pipeline
     if pipeline is None:
         raise HTTPException(status_code=503, detail="Inference pipeline not initialized.")
 
-    samples = BenchmarkSampleGenerator.generate_all_samples()
-    
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
     # Resolve baseline source
     if baseline_file and baseline_file.filename:
         base_path = UPLOADS_DIR / f"base_{uuid.uuid4().hex[:8]}.png"
         with open(base_path, "wb") as f:
             shutil.copyfileobj(baseline_file.file, f)
         base_src = str(base_path)
-    elif baseline_sample:
-        if baseline_sample == "baseline" or baseline_sample == "longitudinal_baseline":
-            base_src = samples["longitudinal_pair"]["baseline_path"]
-        elif baseline_sample in samples:
-            base_src = samples[baseline_sample]["image_path"]
-        else:
-            base_src = samples["longitudinal_pair"]["baseline_path"]
+    elif baseline_sample in ["longitudinal_pair", "baseline", "longitudinal_baseline"]:
+        base_src = REAL_SAMPLES_CATALOG["longitudinal_pair"]["baseline_path"]
+    elif baseline_sample and baseline_sample in REAL_SAMPLES_CATALOG:
+        base_src = REAL_SAMPLES_CATALOG[baseline_sample].get("image_path")
     else:
-        base_src = samples["longitudinal_pair"]["baseline_path"]
+        base_src = REAL_SAMPLES_CATALOG["longitudinal_pair"]["baseline_path"]
 
     # Resolve followup source
     if followup_file and followup_file.filename:
@@ -171,93 +256,118 @@ async def run_longitudinal_assessment(
         with open(follow_path, "wb") as f:
             shutil.copyfileobj(followup_file.file, f)
         follow_src = str(follow_path)
-    elif followup_sample:
-        if followup_sample == "followup" or followup_sample == "longitudinal_followup":
-            follow_src = samples["longitudinal_pair"]["followup_path"]
-        elif followup_sample in samples:
-            follow_src = samples[followup_sample]["image_path"]
-        else:
-            follow_src = samples["longitudinal_pair"]["followup_path"]
+    elif followup_sample in ["longitudinal_pair", "followup", "longitudinal_followup"]:
+        follow_src = REAL_SAMPLES_CATALOG["longitudinal_pair"]["followup_path"]
+    elif followup_sample and followup_sample in REAL_SAMPLES_CATALOG:
+        follow_src = REAL_SAMPLES_CATALOG[followup_sample].get("image_path")
     else:
-        follow_src = samples["longitudinal_pair"]["followup_path"]
+        follow_src = REAL_SAMPLES_CATALOG["longitudinal_pair"]["followup_path"]
+
+    spacing_src = f"user_provided ({pixel_spacing_mm:.4f} mm)" if pixel_spacing_mm else None
 
     try:
-        # Run inference on both scans
-        res_base = pipeline.run_full_inference(base_src)
-        res_follow = pipeline.run_full_inference(follow_src)
+        res_base = pipeline.run_full_inference(
+            base_src,
+            classifier=classifier,
+            seg_architecture=seg_architecture,
+            pixel_spacing_mm=pixel_spacing_mm,
+            spacing_source=spacing_src,
+        )
+        res_follow = pipeline.run_full_inference(
+            follow_src,
+            classifier=classifier,
+            seg_architecture=seg_architecture,
+            pixel_spacing_mm=pixel_spacing_mm,
+            spacing_source=spacing_src,
+        )
 
-        # Longitudinal comparison
         comparison = LongitudinalAnalyzer.compare_timepoints(
             res_base["quantitative_metrics"],
             res_follow["quantitative_metrics"],
-            days_between=days_between
+            days_between=days_between,
         )
 
         import numpy as np
         b_mask = np.array(res_base["segmentation"]["raw_mask"])
         f_mask = np.array(res_follow["segmentation"]["raw_mask"])
         delta_map_pil = LongitudinalAnalyzer.generate_longitudinal_delta_map(b_mask, f_mask)
-        from app.services.preprocessor import MedicalImagePreprocessor
         delta_map_b64 = MedicalImagePreprocessor.pil_to_base64(delta_map_pil)
 
         return {
             "comparison": comparison,
             "baseline_result": res_base,
             "followup_result": res_follow,
-            "delta_map_base64": delta_map_b64
+            "delta_map_base64": delta_map_b64,
+            "disclaimer": ACADEMIC_DISCLAIMER,
         }
+    except FileNotFoundError as fnf:
+        raise HTTPException(status_code=503, detail=str(fnf))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Longitudinal evaluation error: {str(e)}")
 
+
 @app.post("/api/report")
 async def generate_report_endpoint(
-    patient_name: str = Form("John Doe"),
-    patient_id: str = Form("PT-2026-901"),
-    age_gender: str = Form("45 / M"),
+    patient_name: str = Form("Anonymous Subject"),
+    patient_id: str = Form("SUBJ-2026-042"),
     sample_key: str = Form("glioma"),
-    include_longitudinal: bool = Form(False)
+    classifier: str = Form("effb0"),
+    seg_architecture: str = Form("attunet"),
+    pixel_spacing_mm: Optional[float] = Form(None),
+    include_longitudinal: bool = Form(False),
 ):
     global pipeline
     if pipeline is None:
         raise HTTPException(status_code=503, detail="Pipeline not initialized.")
 
-    samples = BenchmarkSampleGenerator.generate_all_samples()
-    src = samples.get(sample_key, samples["glioma"])["image_path"]
-    inf_res = pipeline.run_full_inference(src)
+    src = REAL_SAMPLES_CATALOG.get(sample_key, REAL_SAMPLES_CATALOG["glioma"]).get("image_path")
+    spacing_src = f"user_provided ({pixel_spacing_mm:.4f} mm)" if pixel_spacing_mm else None
 
-    long_res = None
-    if include_longitudinal:
-        base_src = samples["longitudinal_pair"]["baseline_path"]
-        follow_src = samples["longitudinal_pair"]["followup_path"]
-        inf_base = pipeline.run_full_inference(base_src)
-        inf_follow = pipeline.run_full_inference(follow_src)
-        long_res = LongitudinalAnalyzer.compare_timepoints(
-            inf_base["quantitative_metrics"],
-            inf_follow["quantitative_metrics"],
-            days_between=90
+    try:
+        inf_res = pipeline.run_full_inference(
+            src,
+            classifier=classifier,
+            seg_architecture=seg_architecture,
+            pixel_spacing_mm=pixel_spacing_mm,
+            spacing_source=spacing_src,
         )
 
-    patient_info = {
-        "patient_name": patient_name,
-        "patient_id": patient_id,
-        "age_gender": age_gender,
-        "referring_physician": "Dr. S. K. Mohapatra, MD (Neuro-Oncology)",
-        "modality": "Brain MRI T1-CE Axial 3.0mm",
-        "exam_date": "November 16, 2026 - 14:30"
-    }
+        long_res = None
+        if include_longitudinal:
+            base_src = REAL_SAMPLES_CATALOG["longitudinal_pair"]["baseline_path"]
+            follow_src = REAL_SAMPLES_CATALOG["longitudinal_pair"]["followup_path"]
+            inf_base = pipeline.run_full_inference(base_src, classifier=classifier, seg_architecture=seg_architecture)
+            inf_follow = pipeline.run_full_inference(follow_src, classifier=classifier, seg_architecture=seg_architecture)
+            long_res = LongitudinalAnalyzer.compare_timepoints(
+                inf_base["quantitative_metrics"],
+                inf_follow["quantitative_metrics"],
+                days_between=90,
+            )
 
-    report_file_path = ClinicalReportGenerator.generate_pdf_report(
-        inference_result=inf_res,
-        longitudinal_result=long_res,
-        patient_info=patient_info
-    )
+        patient_info = {
+            "patient_name": patient_name,
+            "patient_id": patient_id,
+            "modality": "Brain MRI T1-CE Axial Slice",
+            "exam_date": "Academic Verification Run",
+        }
 
-    filename = Path(report_file_path).name
-    return {
-        "status": "success",
-        "filename": filename,
-        "download_url": f"/api/report/download/{filename}"
-    }
+        report_file_path = ClinicalReportGenerator.generate_pdf_report(
+            inference_result=inf_res,
+            longitudinal_result=long_res,
+            patient_info=patient_info,
+        )
+
+        filename = Path(report_file_path).name
+        return {
+            "status": "success",
+            "filename": filename,
+            "download_url": f"/api/report/download/{filename}",
+        }
+    except FileNotFoundError as fnf:
+        raise HTTPException(status_code=503, detail=str(fnf))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Report generation error: {str(e)}")
+
 
 @app.get("/api/report/download/{filename}")
 @app.head("/api/report/download/{filename}")
@@ -268,80 +378,80 @@ async def download_report_file(filename: str):
     return FileResponse(
         path=str(file_path),
         filename=filename,
-        media_type="application/pdf"
+        media_type="application/pdf",
     )
 
-# ==================== IEEE RESEARCH & BENCHMARK ENDPOINTS ====================
 
-@app.get("/api/ieee/metrics")
-async def get_ieee_metrics():
-    """Returns comprehensive IEEE benchmark metrics, confusion matrix, ROC curves, and SOTA comparison."""
-    metrics = IEEEMetricsEngine.compute_comprehensive_metrics()
-    metrics["literature_baselines"] = IEEEMetricsEngine.get_benchmark_comparison()
-    return metrics
+@app.get("/api/metrics")
+async def get_metrics():
+    """Returns measured metrics from results/ directory without fabrication."""
+    results_dir = Path(PROJECT_ROOT) / "results"
+    output = {
+        "disclaimer": ACADEMIC_DISCLAIMER,
+        "models": {},
+        "segmentation": {},
+        "leakage": {},
+        "clean_split": {},
+    }
 
-@app.get("/api/ieee/paper/download")
-@app.head("/api/ieee/paper/download")
-async def download_ieee_paper():
-    """Generates and serves the official 2-Column IEEE Conference Paper PDF."""
-    pdf_path = IEEEPaperGenerator.generate_ieee_paper_pdf()
-    return FileResponse(
-        path=pdf_path,
-        filename="IEEE_Conference_Paper_Brain_Tumor.pdf",
-        media_type="application/pdf"
-    )
+    # Load metrics.json if generated
+    metrics_path = results_dir / "metrics.json"
+    if metrics_path.exists():
+        try:
+            with open(metrics_path, "r") as f:
+                output["models"] = json.load(f)
+        except Exception:
+            pass
 
-@app.get("/api/ieee/latex/download")
-@app.head("/api/ieee/latex/download")
-async def download_ieee_latex():
-    """Serves the complete LaTeX manuscript source code."""
-    tex_path = Path(__file__).resolve().parent.parent / "paper" / "IEEE_Brain_Tumor_Research_Paper.tex"
-    if not tex_path.exists():
-        raise HTTPException(status_code=404, detail="LaTeX manuscript not found.")
-    return FileResponse(
-        path=str(tex_path),
-        filename="IEEE_Brain_Tumor_Research_Paper.tex",
-        media_type="text/x-tex"
-    )
+    # Load segmentation.json
+    seg_path = results_dir / "segmentation.json"
+    if seg_path.exists():
+        try:
+            with open(seg_path, "r") as f:
+                output["segmentation"] = json.load(f)
+        except Exception:
+            pass
 
-@app.get("/api/ieee/report/download")
-@app.head("/api/ieee/report/download")
-async def download_ieee_report():
-    """Serves the complete University Seminar & Major Project Thesis Report."""
-    md_path = Path(__file__).resolve().parent.parent / "paper" / "FINAL_SEMINAR_REPORT_OUTR.md"
-    if not md_path.exists():
-        md_path = Path(__file__).resolve().parent.parent / "paper" / "IEEE_Seminar_Project_Report.md"
-    if not md_path.exists():
-        raise HTTPException(status_code=404, detail="Project report not found.")
-    return FileResponse(
-        path=str(md_path),
-        filename="FINAL_SEMINAR_REPORT_OUTR.md",
-        media_type="text/markdown"
-    )
+    # Load leakage.json
+    leak_path = results_dir / "leakage.json"
+    if leak_path.exists():
+        try:
+            with open(leak_path, "r") as f:
+                output["leakage"] = json.load(f)
+        except Exception:
+            pass
+
+    # Load clean_split.json
+    split_path = results_dir / "clean_split.json"
+    if split_path.exists():
+        try:
+            with open(split_path, "r") as f:
+                output["clean_split"] = json.load(f)
+        except Exception:
+            pass
+
+    return output
+
 
 @app.get("/api/report/final/docx")
 @app.head("/api/report/final/docx")
 async def download_final_report_docx():
-    """Serves the official formatted OUTR Seminar Report Word document (.docx)."""
-    docx_path = Path(__file__).resolve().parent.parent / "paper" / "FINAL_SEMINAR_REPORT_OUTR.docx"
-    if not docx_path.exists():
-        raise HTTPException(status_code=404, detail="OUTR Seminar Report Word document not found.")
-    return FileResponse(
-        path=str(docx_path),
-        filename="FINAL_SEMINAR_REPORT_OUTR.docx",
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
+    """Serves the OUTR Seminar Report Word document (.docx)."""
+    paper_dir = Path(PROJECT_ROOT) / "paper"
+    for name in ["Final_Report_Brain_Tumor_Detection_OUTR.docx", "FINAL_SEMINAR_REPORT_OUTR.docx", "BRAIN_TUMOR_FINAL_REPORT.docx"]:
+        p = paper_dir / name
+        if p.exists():
+            return FileResponse(path=str(p), filename=name, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    raise HTTPException(status_code=404, detail="Word document report not found.")
+
 
 @app.get("/api/report/final/pdf")
 @app.head("/api/report/final/pdf")
 async def download_final_report_pdf():
-    """Serves the official formatted OUTR Seminar Report PDF (.pdf)."""
-    pdf_path = Path(__file__).resolve().parent.parent / "paper" / "FINAL_SEMINAR_REPORT_OUTR.pdf"
-    if not pdf_path.exists():
-        raise HTTPException(status_code=404, detail="OUTR Seminar Report PDF not found.")
-    return FileResponse(
-        path=str(pdf_path),
-        filename="FINAL_SEMINAR_REPORT_OUTR.pdf",
-        media_type="application/pdf"
-    )
-
+    """Serves the OUTR Seminar Report PDF (.pdf)."""
+    paper_dir = Path(PROJECT_ROOT) / "paper"
+    for name in ["Final_Report_Brain_Tumor_Detection_OUTR.pdf", "FINAL_SEMINAR_REPORT_OUTR.pdf"]:
+        p = paper_dir / name
+        if p.exists():
+            return FileResponse(path=str(p), filename=name, media_type="application/pdf")
+    raise HTTPException(status_code=404, detail="PDF report not found.")

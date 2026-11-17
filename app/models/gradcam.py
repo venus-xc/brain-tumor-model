@@ -1,102 +1,88 @@
+"""Explainable AI (XAI) Engine: Gradient-weighted Class Activation Mapping (Grad-CAM).
+Uses exact autograd gradients matching reference_code/exp/gradcam.py.
+Supports EfficientNet-B0 and BrainCNN architectures.
+"""
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from PIL import Image
-import matplotlib.cm as cm
+import cv2
+
+
+def get_target_conv_layer(model: nn.Module) -> nn.Module:
+    """Finds the last convolutional layer in the feature extractor."""
+    if hasattr(model, "conv_head"):
+        return model.conv_head
+    if hasattr(model, "features"):
+        for block in reversed(model.features):
+            for layer in reversed(block):
+                if isinstance(layer, nn.Conv2d):
+                    return layer
+    last_conv = None
+    for module in model.modules():
+        if isinstance(module, nn.Conv2d):
+            last_conv = module
+    if last_conv is not None:
+        return last_conv
+    raise ValueError(f"Could not automatically identify last Conv2d layer in {type(model)}")
+
 
 class GradCAM:
-    """
-    Explainable AI (XAI) Engine using Gradient-weighted Class Activation Mapping (Grad-CAM).
-    Identifies the discriminative regions in MRI scans influencing the neural network's
-    classification decisions (Glioma, Meningioma, Pituitary, Normal).
-    """
-    def __init__(self, model, target_layer):
+    """First-order Grad-CAM engine."""
+
+    def __init__(self, model: nn.Module, target_layer: nn.Module = None):
         self.model = model
-        self.target_layer = target_layer
-        self.gradients = None
+        self.target_layer = target_layer or get_target_conv_layer(model)
         self.activations = None
-        self._register_hooks()
+        self._hook = self.target_layer.register_forward_hook(self._forward_hook)
 
-    def _register_hooks(self):
-        def forward_hook(module, input, output):
-            self.activations = output.detach()
+    def _forward_hook(self, module, inp, out):
+        self.activations = out
 
-        def backward_hook(module, grad_in, grad_out):
-            self.gradients = grad_out[0].detach()
-
-        self.target_layer.register_forward_hook(forward_hook)
-        self.target_layer.register_full_backward_hook(backward_hook)
-
-    def generate_heatmap(self, input_tensor, target_class=None):
-        """
-        Generates 2D Grad-CAM heatmap normalized to [0, 1].
-        input_tensor: shape (1, C, H, W)
-        """
+    def generate_heatmap(self, input_tensor: torch.Tensor, target_class: int = None) -> np.ndarray:
+        """Generates 2D Grad-CAM heatmap in [0, 1] matching input shape [H, W]."""
         self.model.eval()
-        self.model.zero_grad()
-        
-        # Forward pass
-        logits = self.model(input_tensor)
-        
+        self.activations = None
+
+        out = self.model(input_tensor)
         if target_class is None:
-            target_class = torch.argmax(logits, dim=1).item()
-        
-        # Target score for backprop
-        score = logits[0, target_class]
-        score.backward(retain_graph=True)
-        
-        # Global Average Pooling of gradients (neuron importance weights)
-        # gradients: (1, C, H, W)
-        weights = torch.mean(self.gradients, dim=(2, 3), keepdim=True)
-        
-        # Weighted combination of forward activation maps
-        cam = torch.sum(weights * self.activations, dim=1, keepdim=True)
-        
-        # Apply ReLU to retain features that positively correlate with the target class
-        cam = F.relu(cam)
-        
-        # Upsample to match original input size
-        h, w = input_tensor.shape[2], input_tensor.shape[3]
-        cam = F.interpolate(cam, size=(h, w), mode="bilinear", align_corners=False)
-        
-        cam = cam.squeeze().cpu().numpy()
-        
-        # Normalize between 0 and 1
-        cam_min, cam_max = cam.min(), cam.max()
-        if cam_max - cam_min > 1e-8:
-            cam = (cam - cam_min) / (cam_max - cam_min)
+            target_class = int(out.argmax(1).item())
+
+        A = self.activations
+        score = out[0, target_class]
+        grads = torch.autograd.grad(score, A, retain_graph=True)[0][0]
+        A = A[0].detach()
+
+        # Grad-CAM: alpha_k = mean_ij dY/dA ; L = ReLU(sum_k alpha_k A_k)
+        w = grads.mean((1, 2))
+        gc = F.relu((w[:, None, None] * A).sum(0)).detach().cpu().numpy()
+
+        h, w_in = input_tensor.shape[2], input_tensor.shape[3]
+        gc = cv2.resize(gc, (w_in, h), interpolation=cv2.INTER_CUBIC)
+        gc = np.maximum(gc, 0)
+        max_val = gc.max()
+        if max_val > 1e-8:
+            gc = gc / max_val
         else:
-            cam = np.zeros_like(cam)
-            
-        return cam, target_class
+            gc = np.zeros_like(gc)
+
+        return gc
 
     @staticmethod
-    def overlay_heatmap(original_image: Image.Image, heatmap: np.ndarray, alpha: float = 0.45, colormap_name: str = "jet") -> Image.Image:
-        """
-        Overlays the Grad-CAM heatmap onto the original MRI scan.
-        original_image: PIL Image
-        heatmap: 2D numpy array [0, 1]
-        alpha: Blending weight of heatmap
-        colormap_name: 'jet', 'inferno', 'turbo', 'viridis'
-        """
-        orig_w, orig_h = original_image.size
-        # Resize heatmap if dimensions don't match
-        if heatmap.shape[0] != orig_h or heatmap.shape[1] != orig_w:
-            h_img = Image.fromarray((heatmap * 255).astype(np.uint8))
-            h_img = h_img.resize((orig_w, orig_h), Image.Resampling.BILINEAR)
-            heatmap = np.array(h_img) / 255.0
-
-        # Apply colormap
-        try:
-            import matplotlib
-            cmap = matplotlib.colormaps[colormap_name]
-        except Exception:
-            cmap = cm.get_cmap(colormap_name)
-        colored_heatmap = cmap(heatmap)[:, :, :3]  # Drop alpha, get RGB in [0, 1]
-        colored_heatmap = (colored_heatmap * 255).astype(np.uint8)
-        
-        orig_np = np.array(original_image.convert("RGB"))
-        
-        # Blended image
-        blended = (orig_np * (1.0 - alpha) + colored_heatmap * alpha).astype(np.uint8)
+    def overlay_heatmap(pil_image, heatmap: np.ndarray, alpha: float = 0.45, colormap_name: str = "jet"):
+        """Overlays a 2D heatmap [0, 1] onto a PIL image with alpha blending."""
+        from PIL import Image
+        w, h = pil_image.size
+        hm_u8 = (np.clip(heatmap, 0, 1) * 255).astype(np.uint8)
+        hm_resized = cv2.resize(hm_u8, (w, h), interpolation=cv2.INTER_LINEAR)
+        cm_code = cv2.COLORMAP_JET
+        if colormap_name.lower() == "inferno":
+            cm_code = cv2.COLORMAP_INFERNO
+        elif colormap_name.lower() == "magma":
+            cm_code = cv2.COLORMAP_MAGMA
+        color_map = cv2.applyColorMap(hm_resized, cm_code)
+        color_map = cv2.cvtColor(color_map, cv2.COLOR_BGR2RGB)
+        img_rgb = np.array(pil_image.convert("RGB"))
+        blended = cv2.addWeighted(img_rgb, 1.0 - alpha, color_map, alpha, 0)
         return Image.fromarray(blended)
+
