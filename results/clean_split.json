@@ -1,0 +1,40 @@
+{
+ "total_images": 3264,
+ "images_in_duplicate_clusters": 739,
+ "duplicate_clusters": 280,
+ "clusters_spanning_official_train_test": 189,
+ "conflicting_label_clusters": 2,
+ "unique_images_kept": 2803,
+ "unique_per_class": [
+  293,
+  881,
+  801,
+  828
+ ],
+ "split_sizes": {
+  "train": 1962,
+  "val": 421,
+  "test": 420
+ },
+ "split_per_class": {
+  "train": [
+   205,
+   617,
+   560,
+   580
+  ],
+  "val": [
+   45,
+   132,
+   120,
+   124
+  ],
+  "test": [
+   43,
+   132,
+   121,
+   124
+  ]
+ },
+ "duplicate_groups_crossing_subsets": 0
+}

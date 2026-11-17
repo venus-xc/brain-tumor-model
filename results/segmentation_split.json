@@ -1,0 +1,34 @@
+{
+ "total_images": 3064,
+ "total_patients": 233,
+ "split_info": {
+  "train": {
+   "n_images": 2153,
+   "n_patients": 163,
+   "per_class": {
+    "Meningioma": 514,
+    "Glioma": 980,
+    "Pituitary": 659
+   }
+  },
+  "val": {
+   "n_images": 457,
+   "n_patients": 35,
+   "per_class": {
+    "Meningioma": 111,
+    "Glioma": 236,
+    "Pituitary": 110
+   }
+  },
+  "test": {
+   "n_images": 454,
+   "n_patients": 35,
+   "per_class": {
+    "Meningioma": 83,
+    "Glioma": 210,
+    "Pituitary": 161
+   }
+  }
+ },
+ "shared_pids": 0
+}
