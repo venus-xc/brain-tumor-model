@@ -46,12 +46,16 @@ TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @app.get("/", response_class=HTMLResponse)
+@app.head("/", response_class=HTMLResponse)
 async def index_view(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "classes": CLASS_NAMES,
-        "descriptions": CLASS_DESCRIPTIONS
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "classes": CLASS_NAMES,
+            "descriptions": CLASS_DESCRIPTIONS
+        }
+    )
 
 @app.get("/api/health")
 async def health_check():
