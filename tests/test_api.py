@@ -84,4 +84,17 @@ def test_ieee_latex_download(client):
 def test_ieee_report_download(client):
     res = client.get("/api/ieee/report/download")
     assert res.status_code == 200
-    assert "SEMINAR AND MAJOR PROJECT REPORT" in res.text
+    assert "SEMINAR REPORT" in res.text
+
+def test_final_report_docx_download(client):
+    res = client.get("/api/report/final/docx")
+    assert res.status_code == 200
+    assert "wordprocessingml" in res.headers["content-type"]
+    assert len(res.content) > 10000
+
+def test_final_report_pdf_download(client):
+    res = client.get("/api/report/final/pdf")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/pdf"
+    assert len(res.content) > 10000
+
