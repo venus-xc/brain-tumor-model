@@ -2,9 +2,9 @@
  "unet_dice": 0.691,
  "unet_iou": 0.601,
  "unet_params": 7762465,
- "attunet_dice": 0.812,
- "attunet_iou": 0.705,
- "attunet_params": 8105201,
+ "attunet_dice": 0.745,
+ "attunet_iou": 0.653,
+ "attunet_params": 8722077,
  "per_class_dice": {
   "unet": {
    "meningioma": 0.844,
@@ -12,9 +12,9 @@
    "pituitary": 0.774
   },
   "attunet": {
-   "meningioma": 0.866,
-   "glioma": 0.779,
-   "pituitary": 0.821
+   "meningioma": 0.861,
+   "glioma": 0.61,
+   "pituitary": 0.863
   }
  },
  "n_test_images": 454,

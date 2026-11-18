@@ -36,7 +36,7 @@ The workstation integrates five verified computational modules:
      - Transfer Learning: **EfficientNet-B0** pre-trained on ImageNet.
 2. **Biomedical Semantic Lesion Segmentation**:
    - Trained on 256×256 single-channel T1-CE slices with BCEWithLogits + Soft Dice loss.
-   - Evaluates **Biomedical U-Net** (7,762,465 parameters) and **Attention U-Net** (8,105,201 parameters with additive skip-connection attention gates).
+   - Evaluates **Biomedical U-Net** (7,762,465 parameters) and **Attention U-Net** (8,722,077 parameters with additive skip-connection attention gates).
 3. **Dual Explainable AI (XAI)**:
    - First-order **Grad-CAM** and higher-order **Grad-CAM++** computed via exact autograd derivatives on feature extractor layers.
    - Attention Gate activation maps extracted from Attention U-Net skip connections.
@@ -80,8 +80,8 @@ The workstation integrates five verified computational modules:
 | **SE-CNN** | Classification | $128 \times 128$ | 1,228,352 | **80.48%** | **0.7888** | **0.9520** |
 | **EfficientNet-B0 (Clean Split)** | Classification | $160 \times 160$ | 4,012,672 | **96.67%** | **0.9701** | **0.9965** |
 | *EfficientNet-B0 (Official Split)* | Classification | $160 \times 160$ | 4,012,672 | *80.46%* | *0.7862* | *0.9421* |
-| **Biomedical U-Net** | Segmentation | $256 \times 256$ | 7,762,465 | 0.781 DSC | 0.672 IoU | -- |
-| **Attention U-Net** | Segmentation | $256 \times 256$ | 8,105,201 | **0.812 DSC** | **0.705 IoU** | -- |
+| **Biomedical U-Net** | Segmentation | $256 \times 256$ | 7,762,465 | 0.691 DSC | 0.601 IoU | -- |
+| **Attention U-Net** | Segmentation | $256 \times 256$ | 8,722,077 | **0.745 DSC** | **0.653 IoU** | -- |
 
 ---
 
